@@ -7,69 +7,112 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.core.window import Window
 
+simple_mode_temp = 190
+extended_mode_temp = 50
+low_mode_temp = 20
 
 class CustomButton(ButtonBehavior, BoxLayout):
-    def __init__(self, title, subtitle, description, image_path, **kwargs):
+    def __init__(self, title, subtitle, description, image_path,temperature,time, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'horizontal'
         self.size_hint_y = None
         self.height = 150
-        self.padding = [300, 10, 10, 10]  # [left, top, right, bottom]
+        self.padding = [300, 10, 10, 10]
         self.spacing = 10
+        self.title = title
+        self.time = time
+        self.temperature = temperature
 
-        # Image on the left
         self.add_widget(Image(source=image_path, size_hint=(None, 1), width=100))
 
-        # Text area on the right
         text_box = BoxLayout(orientation='vertical', spacing=5)
-        text_box.add_widget(Label(text=title, font_size=18, bold=True, halign='left', valign='middle'))
-        text_box.add_widget(Label(text=subtitle, font_size=14, halign='left', valign='middle'))
-        text_box.add_widget(Label(text=description, font_size=12, halign='left', valign='middle'))
+        text_box.add_widget(Label(text=title, font_size=22, bold=True, halign='left', valign='middle'))
+        text_box.add_widget(Label(text=subtitle, font_size=18, halign='left', valign='middle'))
+        text_box.add_widget(Label(text=description, font_size=18, halign='left', valign='middle'))
 
         for label in text_box.children:
             label.bind(size=label.setter('text_size'))
 
         self.add_widget(text_box)
 
-
 class ProgramScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=20)
-        layout.bind(minimum_height=layout.setter('height'))
+        self.layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=20)
+        self.layout.bind(minimum_height=self.layout.setter('height'))
 
-        # 3 custom buttons, each with unique image
-        btn1 = CustomButton(
-            title="Standard Mode",
-            subtitle="Check water quality",
-            description="View detailed metrics including pH, turbidity, and conductivity.",
-            image_path="images/water.png"
-        )
+        self.buttons = [
+            CustomButton(
+                title="Simple Mode",
+                subtitle="Max Temperature: " + str(simple_mode_temp) + " °C",
+                description="Total Duration: ",
+                image_path="images/water.png",
+                temperature=simple_mode_temp,
+                time=12
+            ),
+            CustomButton(
+                title="Extended",
+                subtitle="Max Temperature: " + str(extended_mode_temp) + " °C",
+                description="Total Duration: ",
+                image_path="images/pump.png",
+                temperature = extended_mode_temp,
+                time = 20
+            ),
+            CustomButton(
+                title="Low Temp",
+                subtitle="Max Temperature: " + str(low_mode_temp) + " °C",
+                description="Total Duration: ",
+                image_path="images/logs.png",
+                temperature = low_mode_temp,
+                time = 3
+            )
+        ]
 
-        btn2 = CustomButton(
-            title="Extended",
-            subtitle="Manage flow rates",
-            description="Adjust and monitor pump activity in real time.",
-            image_path="images/pump.png"
-        )
-
-        btn3 = CustomButton(
-            title="Low Temp",
-            subtitle="Review system history",
-            description="Access recorded data from previous sessions for analysis.",
-            image_path="images/logs.png"
-        )
-
-        layout.add_widget(btn1)
-        layout.add_widget(btn2)
-        layout.add_widget(btn3)
+        for btn in self.buttons:
+            self.layout.add_widget(btn)
 
         scroll_view = ScrollView(size_hint=(1, 0.8))
-        scroll_view.add_widget(layout)
-
+        scroll_view.add_widget(self.layout)
         self.add_widget(scroll_view)
-
+        self.counter = 0
     def go_back(self):
         self.manager.transition = SlideTransition(direction='right')
         self.manager.current = 'second'
+
+    def reorder(self):
+            #By capital letter
+        if self.counter == 0:
+            self.buttons.sort(key=lambda btn: btn.title.lower())
+            self.counter += 1
+            self.layout.clear_widgets()
+            for btn in self.buttons:
+                self.layout.add_widget(btn)
+            #By time ascending
+        elif self.counter == 1:
+            self.buttons.sort(key=lambda btn: btn.time)
+            self.counter += 1
+            self.layout.clear_widgets()
+            for btn in self.buttons:
+                self.layout.add_widget(btn)
+            # By time descending
+        elif self.counter == 2:
+            self.buttons.sort(key=lambda btn: btn.time, reverse=True)
+            self.counter +=1
+            self.layout.clear_widgets()
+            for btn in self.buttons:
+                self.layout.add_widget(btn)
+            # By temp ascending
+        elif self.counter == 3:
+            self.buttons.sort(key=lambda btn: btn.temperature)
+            self.counter =+ 1
+            self.layout.clear_widgets()
+            for btn in self.buttons:
+                self.layout.add_widget(btn)
+            # By temp descending
+        elif self.counter == 4:
+            self.buttons.sort(key=lambda btn: btn.temperature,reverse=True)
+            self.counter = 0
+            self.layout.clear_widgets()
+            for btn in self.buttons:
+                self.layout.add_widget(btn)

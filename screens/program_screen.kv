@@ -8,12 +8,45 @@
                 size: self.size
 
         RoundedSmallButton:
-            pos_hint: {'center_x': 0.2, 'top': 0.95}
+            pos_hint: {'center_x': 0.3, 'top': 0.95}
             on_press: root.go_back()
 
         Image:
             source: "logos/turn-back.png"
             size_hint: None, None
             size: 50, 50
-            pos_hint: {'center_x': 0.2, 'top': 0.935}
+            pos_hint: {'center_x': 0.3, 'top': 0.935}
+
+        Label:
+            text: "Add"
+            font_size: 16
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {'top': 0.98, 'center_x': 0.6}
+
+        RoundedSmallButton:
+            pos_hint: {'center_x': 0.6, 'top': 0.95}
+            on_press: root.go_back()
+
+        Image:
+            source: "logos/add.png"
+            size_hint: None, None
+            size: 50, 50
+            pos_hint: {'center_x': 0.6, 'top': 0.935}
+
+        Label:
+            text: "Reorder"
+            font_size: 16
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {'top': 0.98, 'center_x': 0.7}
+        RoundedSmallButton:
+            pos_hint: {'center_x': 0.7, 'top': 0.95}
+            on_press: root.reorder()
+
+        Image:
+            source: "logos/reorder-option.png"
+            size_hint: None, None
+            size: 50, 50
+            pos_hint: {'center_x': 0.7, 'top': 0.935}
 
