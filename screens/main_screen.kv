@@ -1,0 +1,55 @@
+<MainScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: [0, 0, 0, 0]
+
+        # Upper Panel (Header)
+        BoxLayout:
+            padding: [0, 0, 0, 15]
+            size_hint_y: None
+            height: 60  # Height for the upper panel
+            canvas.before:
+                Color:
+                    rgba: 0.498, 0.533, 0.553, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                Color:
+                    rgba: 1, 1, 1, 1
+                Line:
+                    points: [self.x, self.y, self.right, self.y]
+                    width: 6
+            Label:
+                id: time_label
+                text: 'Time loading...'
+                font_size: 35
+                color: 1, 1, 1, 1  # White text for the time
+                size_hint_y: None
+                height: 35
+                halign: 'center'  # Center the text horizontally
+                valign: 'middle'  # Center the text vertically
+
+        # Main content below the panel
+        FloatLayout:
+            orientation: 'vertical'
+            padding: 20
+            spacing: 10
+            canvas.before:
+                Color:
+                    rgba: 0.498, 0.533, 0.553, 1  # Same background color as the upper panel
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Label:
+                text: 'WELCOME TO COMPOSITE OVEN SWARMLY'
+                font_size: 25
+                pos_hint: {'center_x': 0.5, 'top': 1.25}
+
+            RoundedButton:
+                text: 'Continue'
+                font_size: 30
+                pos_hint: {'center_x': 0.5, 'top': 0.4}
+                on_press: root.go_to_next()
+
+

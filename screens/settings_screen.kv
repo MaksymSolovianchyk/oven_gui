@@ -1,0 +1,15 @@
+<SettingsScreen>:
+    FloatLayout:
+        canvas.before:
+            Color:
+                rgba: 0.498, 0.533, 0.553, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "Currentsss temp: "
+            font_size: 30
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {'top': 0.95, 'center_x': 0.8}
