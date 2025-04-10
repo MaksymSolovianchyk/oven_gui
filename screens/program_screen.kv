@@ -9,29 +9,13 @@
 
         # Top menu buttons
         RoundedSmallButton:
-            pos_hint: {'center_x': 0.3, 'top': 0.95}
+            pos_hint: {'center_x': 0.2, 'top': 0.95}
             on_press: root.go_back()
         Image:
             source: "logos/turn-back.png"
             size_hint: None, None
             size: 50, 50
-            pos_hint: {'center_x': 0.3, 'top': 0.925}
-
-        Label:
-            text: "Add"
-            font_size: 16
-            size_hint: None, None
-            size: self.texture_size
-            pos_hint: {'top': 0.99, 'center_x': 0.6}
-        RoundedSmallButton:
-            pos_hint: {'center_x': 0.6, 'top': 0.95}
-            on_press: root.go_back()
-        Image:
-            source: "logos/add.png"
-            size_hint: None, None
-            size: 50, 50
-            pos_hint: {'center_x': 0.6, 'top': 0.92}
-
+            pos_hint: {'center_x': 0.2, 'top': 0.925}
         Label:
             text: "Reorder"
             font_size: 16
@@ -40,7 +24,6 @@
             pos_hint: {'top': 0.99, 'center_x': 0.75}
         RoundedSmallButton:
             pos_hint: {'center_x': 0.75, 'top': 0.95}
-            on_press: root.reorder()
         Image:
             source: "logos/reorder-option.png"
             size_hint: None, None
@@ -56,6 +39,7 @@
             do_scroll_y: True
 
             BoxLayout:
+                id: program_screen_container
                 orientation: 'vertical'
                 size_hint_y: None
                 height: 880
@@ -68,27 +52,27 @@
                         pos_hint: {'center_x': 0.5}
 
                     Image:
-                        source: 'images/icon1.png'
+                        source: 'logos/up_ladder.png'
                         size_hint: None, None
-                        size: 100, 100
-                        pos_hint: {'center_x': 0.2, 'center_y': 0.5}
+                        size: 200, 200
+                        pos_hint: {'center_x': 0.27, 'center_y': 0.43}
 
                     Label:
-                        text: "Low Temp Mode"
+                        text: "Up Ladder Mode"
                         font_size: 24
                         color: 1, 1, 1, 1
                         size_hint: None, None
                         size: self.texture_size
-                        pos_hint: {'center_x': 0.5, 'center_y': 0.65}
+                        pos_hint: {'center_x': 0.52, 'center_y': 0.65}
                     Label:
-                        text: "Temperature: " + root.low_mode_temp_text + "°C"
+                        text: " Max Temperature: " + root.upladder_mode_temp_text + "°C"
                         font_size: 20
                         color: 1, 1, 1, 1
                         size_hint: None, None
                         size: self.texture_size
-                        pos_hint: {'center_x': 0.53, 'center_y': 0.5}
+                        pos_hint: {'center_x': 0.555, 'center_y': 0.5}
                     Label:
-                        text: "Time: " + root.low_mode_time_text + " min"
+                        text: "Time: " + root.upladder_mode_time_text + " min"
                         font_size: 20
                         color: 1, 1, 1, 1
                         size_hint: None, None
@@ -104,27 +88,27 @@
                         pos_hint: {'center_x': 0.5}
 
                     Image:
-                        source: 'images/icon2.png'
+                        source: 'logos/donw_ladder.png'
                         size_hint: None, None
-                        size: 100, 100
-                        pos_hint: {'center_x': 0.2, 'center_y': 0.5}
+                        size: 200, 200
+                        pos_hint: {'center_x': 0.27, 'center_y': 0.43}
 
                     Label:
-                        text: "Mid Temp Mode"
+                        text: "Down Ladder Mode"
                         font_size: 24
                         color: 1, 1, 1, 1
                         size_hint: None, None
                         size: self.texture_size
-                        pos_hint: {'center_x': 0.5, 'center_y': 0.65}
+                        pos_hint: {'center_x': 0.54, 'center_y': 0.65}
                     Label:
-                        text: "Temperature: " + root.default_mode_temp_text + "°C"
+                        text: "Max Temperature: " + root.downladder_mode_temp_text + "°C"
                         font_size: 20
                         color: 1, 1, 1, 1
                         size_hint: None, None
                         size: self.texture_size
-                        pos_hint: {'center_x': 0.53, 'center_y': 0.5}
+                        pos_hint: {'center_x': 0.555, 'center_y': 0.5}
                     Label:
-                        text: "Time: " + root.default_mode_time_text + " min"
+                        text: "Time: " + root.downladder_mode_time_text + " min"
                         font_size: 20
                         color: 1, 1, 1, 1
                         size_hint: None, None
@@ -140,27 +124,26 @@
                         pos_hint: {'center_x': 0.5}
 
                     Image:
-                        source: 'images/icon3.png'
+                        source: 'logos/heating_mode.png'
                         size_hint: None, None
-                        size: 100, 100
-                        pos_hint: {'center_x': 0.2, 'center_y': 0.5}
-
+                        size: 200, 200
+                        pos_hint: {'center_x': 0.27, 'center_y': 0.43}
                     Label:
-                        text: "High Temp Mode"
+                        text: "Heating Mode"
                         font_size: 24
                         color: 1, 1, 1, 1
                         size_hint: None, None
                         size: self.texture_size
                         pos_hint: {'center_x': 0.5, 'center_y': 0.65}
                     Label:
-                        text: "Temperature: " + root.high_mode_temp_text + "°C"
+                        text: "Max Temperature: " + root.heating_mode_temp_text + "°C"
                         font_size: 20
                         color: 1, 1, 1, 1
                         size_hint: None, None
                         size: self.texture_size
-                        pos_hint: {'center_x': 0.53, 'center_y': 0.5}
+                        pos_hint: {'center_x': 0.555, 'center_y': 0.5}
                     Label:
-                        text: "Time: " + root.high_mode_time_text + " min"
+                        text: "Time: " + root.heating_mode_time_text + " min"
                         font_size: 20
                         color: 1, 1, 1, 1
                         size_hint: None, None
