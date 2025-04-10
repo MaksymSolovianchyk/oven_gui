@@ -1,0 +1,18 @@
+<UpLadderScreen>:
+    FloatLayout:
+        canvas.before:
+            Color:
+                rgba: 0.498, 0.533, 0.553, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # Top menu buttons
+        RoundedSmallButton:
+            pos_hint: {'center_x': 0.2, 'top': 0.95}
+            on_press: root.go_back()
+        Image:
+            source: "logos/turn-back.png"
+            size_hint: None, None
+            size: 50, 50
+            pos_hint: {'center_x': 0.2, 'top': 0.925}

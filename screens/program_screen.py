@@ -1,10 +1,6 @@
 from kivy.uix.screenmanager import Screen
 from kivy.properties import StringProperty
-from kivy.uix.filechooser import FileChooserListView
-from kivy.uix.popup import Popup
-from kivy.uix.button import Button
-from kivy.uix.boxlayout import BoxLayout
-import csv
+
 
 upladder_mode_temp = 20
 downladder_mode_temp = 40
@@ -34,3 +30,7 @@ class ProgramScreen(Screen):
     def go_back(self):
         self.manager.transition.direction = 'right'
         self.manager.current = 'second'
+
+    def go_to_up_ladder_screen(self):
+        self.manager.transition.direction = 'left'
+        self.manager.current = 'up_ladder_screen'

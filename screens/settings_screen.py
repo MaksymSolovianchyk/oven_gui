@@ -8,7 +8,7 @@ import csv
 class SettingsScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
+        self.saved_csv_data = []  # stores rows from CSV file
     def go_back(self):
         self.manager.transition.direction = 'right'
         self.manager.current = 'second'
@@ -64,11 +64,14 @@ class SettingsScreen(Screen):
                 popup.dismiss()
 
     def parse_file(self, file_path):
+        self.saved_csv_data.clear()  # Clear previous data if needed
         with open(file_path, 'r') as file:
             reader = csv.reader(file)
             for row in reader:
-                name, temp1, temp2, time1, time2 = row
-                self.create_button(name, temp1, temp2, time1, time2)
+                if len(row) == 5:
+                    name, temp1, temp2, time1, time2 = row
+                    self.saved_csv_data.append((name, temp1, temp2, time1, time2))
+                    self.create_button(name, temp1, temp2, time1, time2)
 
     def create_button(self, name, temp1, temp2, time1, time2):
         new_button = Button(
