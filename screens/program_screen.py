@@ -1,75 +1,36 @@
-from kivy.uix.screenmanager import Screen, SlideTransition
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.image import Image
-from kivy.uix.scrollview import ScrollView
-from kivy.uix.behaviors import ButtonBehavior
-from kivy.core.window import Window
+from kivy.uix.screenmanager import Screen
+from kivy.properties import StringProperty
 
 
-class CustomButton(ButtonBehavior, BoxLayout):
-    def __init__(self, title, subtitle, description, image_path, **kwargs):
-        super().__init__(**kwargs)
-        self.orientation = 'horizontal'
-        self.size_hint_y = None
-        self.height = 150
-        self.padding = [300, 10, 10, 10]  # [left, top, right, bottom]
-        self.spacing = 10
+upladder_mode_temp = 20
+downladder_mode_temp = 40
+heating_mode_temp = 80
 
-        # Image on the left
-        self.add_widget(Image(source=image_path, size_hint=(None, 1), width=100))
-
-        # Text area on the right
-        text_box = BoxLayout(orientation='vertical', spacing=5)
-        text_box.add_widget(Label(text=title, font_size=18, bold=True, halign='left', valign='middle'))
-        text_box.add_widget(Label(text=subtitle, font_size=14, halign='left', valign='middle'))
-        text_box.add_widget(Label(text=description, font_size=12, halign='left', valign='middle'))
-
-        for label in text_box.children:
-            label.bind(size=label.setter('text_size'))
-
-        self.add_widget(text_box)
-
+upladder_mode_time = 12
+downladder_mode_time = 14
+heating_mode_time = 16
 
 class ProgramScreen(Screen):
+    upladder_mode_temp_text = StringProperty(str(upladder_mode_temp))
+    downladder_mode_temp_text = StringProperty(str(downladder_mode_temp))
+    heating_mode_temp_text = StringProperty(str(heating_mode_temp))
+    upladder_mode_time_text = StringProperty(str(upladder_mode_time))
+    downladder_mode_time_text = StringProperty(str(downladder_mode_time))
+    heating_mode_time_text = StringProperty(str(heating_mode_time))
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=20)
-        layout.bind(minimum_height=layout.setter('height'))
-
-        # 3 custom buttons, each with unique image
-        btn1 = CustomButton(
-            title="Standard Mode",
-            subtitle="Check water quality",
-            description="View detailed metrics including pH, turbidity, and conductivity.",
-            image_path="images/water.png"
-        )
-
-        btn2 = CustomButton(
-            title="Extended",
-            subtitle="Manage flow rates",
-            description="Adjust and monitor pump activity in real time.",
-            image_path="images/pump.png"
-        )
-
-        btn3 = CustomButton(
-            title="Low Temp",
-            subtitle="Review system history",
-            description="Access recorded data from previous sessions for analysis.",
-            image_path="images/logs.png"
-        )
-
-        layout.add_widget(btn1)
-        layout.add_widget(btn2)
-        layout.add_widget(btn3)
-
-        scroll_view = ScrollView(size_hint=(1, 0.8))
-        scroll_view.add_widget(layout)
-
-        self.add_widget(scroll_view)
+        self.upladder_mode_temp_text = str(upladder_mode_temp)
+        self.upladder_mode_time_text = str(upladder_mode_time)
+        self.downladder_mode_temp_text = str(downladder_mode_temp)
+        self.downladder_mode_time_text = str(downladder_mode_time)
+        self.heating_mode_time_text = str(heating_mode_time)
+        self.heating_mode_temp_text = str(heating_mode_temp)
 
     def go_back(self):
-        self.manager.transition = SlideTransition(direction='right')
+        self.manager.transition.direction = 'right'
         self.manager.current = 'second'
+
+    def go_to_up_ladder_screen(self):
+        self.manager.transition.direction = 'left'
+        self.manager.current = 'up_ladder_screen'

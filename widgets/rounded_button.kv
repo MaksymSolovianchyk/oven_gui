@@ -35,3 +35,21 @@
             pos: self.pos
             size: self.size
             radius: [15]  # Smaller radius for button fill
+<BigButton@Button>:
+    font_size: 30
+    size_hint: None, None
+    size: 600, 250
+    color: 1, 1, 1, 1
+    canvas.before:
+        Color:
+            rgba: 1,1,1,1  # White color for border (adjust as needed)
+        RoundedRectangle:
+            pos: self.x - 2, self.y - 2
+            size: self.width + 4, self.height + 4
+            radius: [0]  # Rounded corners for the button
+        Color:
+            rgba: 0.3, 0.3, 0.3, 1  # Dark grey color (adjust as needed)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [0]  # Rounded corners for the button fill
