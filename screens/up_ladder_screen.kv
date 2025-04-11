@@ -8,11 +8,73 @@
                 size: self.size
 
         # Top menu buttons
+        Label:
+            text: "Go Back"
+            font_size: 16
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {'top': 0.3, 'center_x': 0.65}
         RoundedSmallButton:
-            pos_hint: {'center_x': 0.2, 'top': 0.95}
+            pos_hint: {'center_x': 0.65, 'top': 0.25}
             on_press: root.go_back()
         Image:
             source: "logos/turn-back.png"
             size_hint: None, None
             size: 50, 50
-            pos_hint: {'center_x': 0.2, 'top': 0.925}
+            pos_hint: {'center_x': 0.65, 'top': 0.225}
+
+        Label:
+            text: "Edit"
+            font_size: 16
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {'top': 0.3, 'center_x': 0.78}
+        RoundedSmallButton:
+            pos_hint: {'center_x': 0.78, 'top': 0.25}
+            on_press: root.go_back()
+        Image:
+            source: "logos/edit-button.png"
+            size_hint: None, None
+            size: 50, 50
+            pos_hint: {'center_x': 0.78, 'top': 0.225}
+
+        Label:
+            text: "Start"
+            font_size: 16
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {'top': 0.3, 'center_x': 0.91}
+        RoundedSmallButton:
+            pos_hint: {'center_x': 0.91, 'top': 0.25}
+            on_press: root.run()
+        Image:
+            source: "logos/play.png"
+            size_hint: None, None
+            size: 50, 50
+            pos_hint: {'center_x': 0.91, 'top': 0.225}
+
+        Label:
+            text: "Up Ladder Mode"
+            font_size: 24
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {'top': 0.7, 'center_x': 0.7}
+
+        Label:
+            text: "Max Temperature: " + root.temp_text + "°C"
+            font_size: 20
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {'top': 0.6, 'center_x': 0.72}
+        Label:
+            text: "Total Duration: " + root.time_text+ "min"
+            font_size: 20
+            size_hint: None, None
+            size: self.texture_size
+            pos_hint: {'top': 0.53, 'center_x': 0.71}
+
+        Image:
+            source: root.graph_source
+            size_hint: None, None
+            size: 500, 400
+            pos_hint: {'center_x': 0.3, 'top': 0.9}

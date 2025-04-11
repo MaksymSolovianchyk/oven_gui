@@ -48,7 +48,7 @@
                     height: 300
 
                     BigButton:
-                        on_press: root.go_to_up_ladder_screen()
+                        on_press: root.go_to_ladder_screen("up_ladder")
                         pos_hint: {'center_x': 0.5}
 
                     Image:
@@ -84,7 +84,7 @@
                     height: 300
 
                     BigButton:
-                        on_press: print("Button 2 pressed")
+                        on_press: root.go_to_ladder_screen("down_ladder")
                         pos_hint: {'center_x': 0.5}
 
                     Image:
@@ -120,7 +120,7 @@
                     height: 300
 
                     BigButton:
-                        on_press: print("Button 3 pressed")
+                        on_press: root.go_to_ladder_screen("heating_ladder")
                         pos_hint: {'center_x': 0.5}
 
                     Image:
