@@ -121,7 +121,6 @@ class RunScreen(Screen):
             target_temp = sts.target_temp
             target_time = sts.target_timer
 
-            # === Live Sensor Reading ===
             global current_temp
             current_temp = sensor_read.get_temperature()
             self.cur_temp = str(int(current_temp))
@@ -131,7 +130,7 @@ class RunScreen(Screen):
                 self.start_time = time.time()
                 self.run_started = True
 
-            # Update temp label color
+            # Temp label color
             if abs(current_temp - target_temp) <= 3:
                 self.cur_color = [0, 1, 0, 1]  # Green
             elif current_temp > target_temp + 3:
@@ -145,29 +144,50 @@ class RunScreen(Screen):
                 self.live_time.append(elapsed)
                 self.live_temp.append(current_temp)
 
-            # === Redraw plot ===
-            self.ax.clear()
+                # Keep only the last 10 minutes
+                window_seconds = 600
+                while self.live_time and (self.live_time[-1] - self.live_time[0]) > window_seconds:
+                    self.live_time.pop(0)
+                    self.live_temp.pop(0)
 
-            # Target temp line
-            self.ax.plot([0, target_time * 60], [target_temp, target_temp],
-                         label='Target Temperature', color='blue', linestyle='--')
+            # === Only initialize lines once ===
+            if not hasattr(self, 'live_line'):
+                # Target line
+                self.target_line, = self.ax.plot(
+                    [0, target_time * 60],
+                    [target_temp, target_temp],
+                    label='Target Temperature',
+                    color='blue',
+                    linestyle='--'
+                )
 
-            # Live temp
+                # Live sensor line
+                self.live_line, = self.ax.plot(
+                    self.live_time,
+                    self.live_temp,
+                    label='Live Sensor Temp',
+                    color='red'
+                )
+
+                self.ax.set_xlabel('Time (s)')
+                self.ax.set_ylabel('Temperature (°C)')
+                self.ax.legend()
+
+            # === Update the existing lines ===
+            self.live_line.set_data(self.live_time, self.live_temp)
+            self.target_line.set_data([0, target_time * 60], [target_temp, target_temp])
+
+            # Update axis limits
             if self.live_time:
-                self.ax.plot(self.live_time, self.live_temp,
-                             label='Live Sensor Temp', color='red')
-
-            # Axis
-            self.ax.set_xlabel('Time (s)')
-            self.ax.set_ylabel('Temperature (°C)')
-            self.ax.set_xlim(0, max(target_time * 60, self.live_time[-1] if self.live_time else 0) + 10)
+                end_time = self.live_time[-1]
+                start_time = max(0, end_time - 600)
+                self.ax.set_xlim(start_time, end_time + 10)
 
             y_vals = self.live_temp + [target_temp]
             if y_vals:
                 self.ax.set_ylim(min(y_vals) - 5, max(y_vals) + 5)
 
-            self.ax.legend()
-            self.fig.canvas.draw()
+            self.fig.canvas.draw_idle()
 
     def go_back(self):
         self.manager.transition = SlideTransition(direction='right')
