@@ -37,12 +37,14 @@
             pos_hint: {'x': 0.02, 'y': 0.05}
             do_scroll_x: False
             do_scroll_y: True
-
+            bar_width: 40 # Visible scrollbar width
+            scroll_type: ['bars', 'content']  # Show both bar and allow content scroll
+            bar_color: 1, 1, 1, 1
             BoxLayout:
                 id: program_screen_container
                 orientation: 'vertical'
                 size_hint_y: None
-                height: 880
+                height: self.minimum_height  # Ensures scrollable content size matches height
                 RelativeLayout:
                     size_hint_y: None
                     height: 300
