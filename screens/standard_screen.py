@@ -15,7 +15,7 @@ timer_hours_first = 0
 timer_hours_second = 0
 start_time = 0
 apply = False
-WATCHDOG_TIMEOUT = 2
+WATCHDOG_TIMEOUT = 5
 # Global watchdogs
 inc_temp_watchdog = None
 dec_temp_watchdog = None
