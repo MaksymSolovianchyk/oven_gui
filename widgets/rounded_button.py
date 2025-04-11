@@ -7,6 +7,7 @@ class RoundedButton(ButtonBehavior, Label):
 
 class RoundedSmallButton(ButtonBehavior, Label):
     logo = StringProperty()
+
     pass
 class BigButton(ButtonBehavior, Label):
     logo = StringProperty()
