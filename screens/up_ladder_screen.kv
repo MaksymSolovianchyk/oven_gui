@@ -31,7 +31,7 @@
             pos_hint: {'top': 0.3, 'center_x': 0.78}
         RoundedSmallButton:
             pos_hint: {'center_x': 0.78, 'top': 0.25}
-            on_press: root.go_back()
+            on_press: root.open_panel()
         Image:
             source: "logos/edit-button.png"
             size_hint: None, None
@@ -78,3 +78,53 @@
             size_hint: None, None
             size: 500, 400
             pos_hint: {'center_x': 0.3, 'top': 0.9}
+
+        # Sliding Panel
+        BoxLayout:
+            id: sliding_panel
+            orientation: 'vertical'
+            size_hint: None, 1
+            width: root.width * 0.6
+            pos: (-self.width, 0)
+            padding:[0,20,0,0]
+            canvas.before:
+                Color:
+                    rgba: 0.15, 0.15, 0.15, 0.95
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            # Top bar with control buttons
+            BoxLayout:
+                size_hint_y: None
+                height: 60
+                padding: [3, 3, 3, 3]
+                spacing: 5
+
+                Button:
+                    text: "Add Step"
+                    font_size: 12
+                    on_press: root.add_step()
+
+                Button:
+                    text: "Delete Step"
+                    font_size: 12
+                    on_press: root.delete_step()
+
+            # Panel content: ScrollView
+            ScrollView:
+                do_scroll_x: False
+                do_scroll_y: True
+                bar_width: 12
+                scroll_type: ['bars', 'content']
+
+                GridLayout:
+                    id: panel_content
+                    cols: 1
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: 10
+                    spacing: 30
+
+
+

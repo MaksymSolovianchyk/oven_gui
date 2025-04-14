@@ -8,12 +8,13 @@ from kivy_garden.matplotlib import FigureCanvasKivyAgg
 import matplotlib.pyplot as plt
 from kivy.clock import Clock
 import time
-from scripts import sensor_read   # This is your module that has get_temperature()
+from scripts import sensor_read
 from screens import standard_screen as sts
 from kivy.uix.popup import Popup
 
 current_temp = int(0)
 time_left = int(0)
+
 
 class RunScreen(Screen):
     cur_temp = StringProperty(str(int(current_temp)))
@@ -21,49 +22,30 @@ class RunScreen(Screen):
     time_left_text = StringProperty(str(time_left))
 
     def start_run(self):
-        self.start_time = None  # Set to None until actual start
+        self.start_time = None
         self.live_time = []
         self.live_temp = []
-        self.run_started = False  # Flag to start timer only once
-        self.time_left_text = "HEATING"
+        self.run_started = False
+        self.time_left_text = "Reaching SetP..."
 
     def show_yes_no_popup(self):
         content = BoxLayout(orientation='vertical', spacing=10, padding=10)
-
-        # Message
         message = Label(text="Cancel the process?")
-
-        # Button layout
         button_layout = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height='40dp')
-
-        # Yes button
         yes_button = Button(text="Yes")
-        # No button
         no_button = Button(text="No")
-
-        # Create popup
-        popup = Popup(title="Confirmation",
-                      content=content,
-                      size_hint=(0.7, 0.4),
-                      auto_dismiss=False)
-
-        # Bind buttons
+        popup = Popup(title="Confirmation", content=content, size_hint=(0.7, 0.4), auto_dismiss=False)
         yes_button.bind(on_press=lambda *args: self.on_yes(popup))
         no_button.bind(on_press=popup.dismiss)
-
-        # Add widgets
         button_layout.add_widget(yes_button)
         button_layout.add_widget(no_button)
         content.add_widget(message)
         content.add_widget(button_layout)
-
-        # Show the popup
         popup.open()
 
     def on_yes(self, popup):
         popup.dismiss()
-        sts.apply=0
-
+        sts.apply = 0
 
     def pop_up_screen(self):
         content = BoxLayout(orientation='vertical', spacing=10, padding=10)
@@ -79,8 +61,8 @@ class RunScreen(Screen):
         super().__init__(**kwargs)
 
         self.fig, self.ax = plt.subplots(figsize=(6, 4))
-        self.ax.set_xlabel('Time')
-        self.ax.set_ylabel('Temperature')
+        self.ax.set_xlabel('Time (s)')
+        self.ax.set_ylabel('Temperature (°C)')
 
         self.graph_widget = FigureCanvasKivyAgg(self.fig)
         self.graph_widget.width = 640
@@ -92,6 +74,8 @@ class RunScreen(Screen):
         self.live_temp = []
         self.run_started = False
         self.start_time = None
+        self.live_line = None
+        self.target_line = None
 
         Clock.schedule_interval(self.update_plot, 1)
         Clock.schedule_interval(self.update_time_left, 1)
@@ -100,13 +84,12 @@ class RunScreen(Screen):
         if sts.apply and self.run_started:
             elapsed = time.time() - self.start_time
             global time_left
-            target_time = sts.target_timer * 60  # Convert minutes to seconds
+            target_time = sts.target_timer * 60
             time_left = max(0, target_time - elapsed)
 
             hours = int(time_left) // 3600
             minutes = (int(time_left) % 3600) // 60
             seconds = int(time_left) % 60
-
             self.time_left_text = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
             if time_left == 0:
@@ -114,74 +97,72 @@ class RunScreen(Screen):
                 sts.apply = False
 
         elif sts.apply and not self.run_started:
-            self.time_left_text = "HEATING..."
+            self.time_left_text = "Reaching SetP..."
 
     def update_plot(self, dt):
-        if sts.apply:
-            target_temp = sts.target_temp
-            target_time = sts.target_timer
+        if not sts.apply:
+            return
 
-            global current_temp
-            current_temp = sensor_read.get_temperature()
-            self.cur_temp = str(int(current_temp))
+        target_temp = sts.target_temp
+        target_time = sts.target_timer
 
-            # Start countdown only once
-            if abs(current_temp - target_temp) <= 3 and not self.run_started:
-                self.start_time = time.time()
-                self.run_started = True
+        global current_temp
+        current_temp = sensor_read.get_temperature()
+        self.cur_temp = str(int(current_temp))
 
-            # Temp label color
-            if abs(current_temp - target_temp) <= 3:
-                self.cur_color = [0, 1, 0, 1]  # Green
-            elif current_temp > target_temp + 3:
-                self.cur_color = [1, 0, 0, 1]  # Red
-            elif current_temp < target_temp - 3:
-                self.cur_color = [0, 0.5, 1, 1]  # Blue
+        # Start countdown only once
+        if abs(current_temp - target_temp) <= 3 and not self.run_started:
+            self.start_time = time.time()
+            self.run_started = True
+            self.live_time.clear()
+            self.live_temp.clear()
 
-            # Collect data
-            if current_temp is not None and self.run_started:
-                elapsed = time.time() - self.start_time
-                self.live_time.append(elapsed)
-                self.live_temp.append(current_temp)
+        # Temp label color
+        if abs(current_temp - target_temp) <= 3:
+            self.cur_color = [0, 1, 0, 1]  # Green
+        elif current_temp > target_temp + 3:
+            self.cur_color = [1, 0, 0, 1]  # Red
+        elif current_temp < target_temp - 3:
+            self.cur_color = [0, 0.5, 1, 1]  # Blue
 
-                # Keep only the last 10 minutes
-                window_seconds = 600
-                while self.live_time and (self.live_time[-1] - self.live_time[0]) > window_seconds:
-                    self.live_time.pop(0)
-                    self.live_temp.pop(0)
+        # Collect data
+        if self.run_started:
+            elapsed = time.time() - self.start_time
+            self.live_time.append(elapsed)
+            self.live_temp.append(current_temp)
 
-            # === Only initialize lines once ===
-            if not hasattr(self, 'live_line'):
-                # Target line
-                self.target_line, = self.ax.plot(
-                    [0, target_time * 60],
-                    [target_temp, target_temp],
-                    label='Target Temperature',
-                    color='blue',
-                    linestyle='--'
-                )
+            # Efficient sliding window (last 10 minutes only)
+            window_seconds = 600
+            while self.live_time and (self.live_time[-1] - self.live_time[0]) > window_seconds:
+                self.live_time.pop(0)
+                self.live_temp.pop(0)
 
-                # Live sensor line
-                self.live_line, = self.ax.plot(
-                    self.live_time,
-                    self.live_temp,
-                    label='Live Sensor Temp',
-                    color='red'
-                )
-
-                self.ax.set_xlabel('Time (s)')
-                self.ax.set_ylabel('Temperature (°C)')
+            # Initialize lines only once
+            if not self.live_line:
+                self.target_line, = self.ax.plot([0, target_time * 60],
+                                                 [target_temp, target_temp],
+                                                 label='Target Temperature',
+                                                 color='blue', linestyle='--')
+                self.live_line, = self.ax.plot(self.live_time,
+                                               self.live_temp,
+                                               label='Live Sensor Temp',
+                                               color='red')
                 self.ax.legend()
 
-            # === Update the existing lines ===
+            # Update data
             self.live_line.set_data(self.live_time, self.live_temp)
             self.target_line.set_data([0, target_time * 60], [target_temp, target_temp])
 
-            # Update axis limits
+            # Axis limits
             if self.live_time:
                 end_time = self.live_time[-1]
-                start_time = max(0, end_time - 600)
-                self.ax.set_xlim(start_time, end_time + 10)
+                if end_time < 60:
+                    # Initial small range
+                    self.ax.set_xlim(0, 60)
+                else:
+                    # Rolling window of the last 10 minutes
+                    start_time = max(0, end_time - 600)
+                    self.ax.set_xlim(start_time, end_time + 10)
 
             y_vals = self.live_temp + [target_temp]
             if y_vals:
