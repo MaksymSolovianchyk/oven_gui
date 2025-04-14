@@ -8,6 +8,11 @@
                 size: self.size
 
         # Top menu buttons
+        RoundedSmallButton:
+            size:80,80
+            pos_hint:{'right':0.95, 'top':0.95}
+            on_press:root.graph_lookup()
+
         Label:
             text: "Go Back"
             font_size: 16

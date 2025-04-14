@@ -2,7 +2,6 @@ from kivy.uix.screenmanager import Screen
 from kivy.properties import StringProperty
 
 
-
 upladder_mode_temp = 20
 downladder_mode_temp = 40
 heating_mode_temp = 80
@@ -13,6 +12,10 @@ heating_mode_time = 16
 temp = int
 time = int
 
+upladder= False
+downladder = False
+heating = False
+
 
 class ProgramScreen(Screen):
     upladder_mode_temp_text = StringProperty(str(upladder_mode_temp))
@@ -21,6 +24,8 @@ class ProgramScreen(Screen):
     upladder_mode_time_text = StringProperty(str(upladder_mode_time))
     downladder_mode_time_text = StringProperty(str(downladder_mode_time))
     heating_mode_time_text = StringProperty(str(heating_mode_time))
+
+    current_mode = StringProperty("")  # Store the current mode here
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -31,12 +36,13 @@ class ProgramScreen(Screen):
         self.heating_mode_time_text = str(heating_mode_time)
         self.heating_mode_temp_text = str(heating_mode_temp)
 
-
     def go_back(self):
         self.manager.transition.direction = 'right'
         self.manager.current = 'second'
 
     def go_to_ladder_screen(self, mode):
+        self.current_mode = mode  # Set the current mode to the selected one
+
         if mode == 'up_ladder':
             temp = upladder_mode_temp
             time = upladder_mode_time
@@ -50,10 +56,9 @@ class ProgramScreen(Screen):
             time = heating_mode_time
             graph = 'logos/heating_mode.png'
 
+        # Pass the mode to the next screen (UpLadderScreen)
         up_screen = self.manager.get_screen('up_ladder_screen')
-        up_screen.temp_text = str(temp)
-        up_screen.time_text = str(time)
-        up_screen.graph_source = graph  # Set image
+        up_screen.set_mode(mode, temp, time, graph)  # Set the mode and temp/time/graph for the next screen
 
         self.manager.transition.direction = 'left'
         self.manager.current = 'up_ladder_screen'

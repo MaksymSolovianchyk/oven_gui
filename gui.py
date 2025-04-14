@@ -3,6 +3,7 @@ from kivy.uix.screenmanager import ScreenManager
 from kivy.lang import Builder
 from kivy.core.window import Window
 
+from screens.program_run_screen import ProgramRunScreen
 from widgets.rounded_button import RoundedButton
 
 from screens.main_screen import MainScreen
@@ -28,6 +29,7 @@ class MyScreenApp(App):
         Builder.load_file("screens/settings_screen.kv")
         Builder.load_file("screens/run_screen.kv")
         Builder.load_file("screens/up_ladder_screen.kv")
+        Builder.load_file("screens/program_run_screen.kv")
         # Load the main layout (after screens are defined)
         Builder.load_file("main.kv")
 
@@ -40,6 +42,7 @@ class MyScreenApp(App):
         screen_manager.add_widget(SettingsScreen(name='settings_screen'))
         screen_manager.add_widget(RunScreen(name='run_screen'))
         screen_manager.add_widget(UpLadderScreen(name='up_ladder_screen'))
+        screen_manager.add_widget(ProgramRunScreen(name='program_run_screen'))
 
         return screen_manager
 

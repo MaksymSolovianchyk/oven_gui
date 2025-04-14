@@ -1,16 +1,17 @@
 from kivy.uix.screenmanager import Screen
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, NumericProperty, ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
-from kivy.properties import NumericProperty, ObjectProperty
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
-from widgets.rounded_button import RoundedSmallButton
 from kivy.animation import Animation
+from widgets.rounded_button import RoundedSmallButton
+from kivy.uix.screenmanager import SlideTransition
+from screens import program_screen
+WATCHDOG_TIMEOUT = 5  # seconds
 
-WATCHDOG_TIMEOUT = 2  # seconds
-
+apply = False
 
 class StepData(Widget):
     target_temp = NumericProperty(50)
@@ -26,7 +27,6 @@ class StepData(Widget):
     inc_time_watchdog = ObjectProperty(None, allownone=True)
     dec_time_watchdog = ObjectProperty(None, allownone=True)
 
-
 class UpLadderScreen(Screen):
     temp_text = StringProperty("")
     time_text = StringProperty("")
@@ -36,21 +36,53 @@ class UpLadderScreen(Screen):
         super().__init__(**kwargs)
         self.steps = []
 
-    def go_back(self):
-        self.manager.transition.direction = 'right'
-        self.manager.current = 'program_screen'
+    def set_mode(self, mode, temp, time, graph):
+        # Set mode-specific properties
+        self.clear_steps()
+        self.temp_text = str(temp)
+        self.time_text = str(time)
+        self.graph_source = graph
 
-    def run(self):
-        self.manager.transition.direction = 'left'
-        self.manager.current = 'run_screen'
+        # Based on the mode, add steps
+        if mode == 'up_ladder':
+            self.add_custom_steps_up()
+        elif mode == 'down_ladder':
+            self.add_custom_steps_down()
+        elif mode == 'heating_ladder':
+            self.add_custom_steps_heat()
 
-    def open_panel(self):
-        panel = self.ids.sliding_panel
-        new_x = 0 if panel.x < 0 else -panel.width  # toggle open/close
-        Animation(x=new_x, duration=0.3, t='out_quad').start(panel)
+    def clear_steps(self):
+        # Clear the list of steps
+        self.steps.clear()
 
-    def add_step(self):
+        # Optionally, remove widgets from the UI (e.g., removing all children of the panel_content container)
+        container = self.ids.panel_content
+        container.clear_widgets()
+
+    def add_custom_steps_up(self):
+        self.add_step(65, 40)
+        self.add_step(70, 50)
+
+    def add_custom_steps_down(self):
+        self.add_step(70, 50)
+        self.add_step(40, 40)
+
+    def add_custom_steps_heat(self):
+        self.add_step(20, 40)
+        self.add_step(50, 50)
+
+    def add_step(self, target_temp, target_time):
+        # Create and add steps (same as before)
+        pass
+
+    def add_custom_steps(self, preset):
+        for step_info in preset:
+            self.add_step(step_info['temp'], step_info['time'])
+
+    def add_step(self, target_temp=20, target_time=30):
         step_data = StepData()
+        step_data.target_temp = target_temp
+        step_data.target_time = target_time
         self.steps.append(step_data)
 
         step_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=100, spacing=30,
@@ -182,7 +214,34 @@ class UpLadderScreen(Screen):
 
         self.ids.panel_content.add_widget(step_layout)
 
+    def run(self):
+        steps_info = [{'temp': step.target_temp, 'time': step.target_time} for step in self.steps]
+        run_screen = self.manager.get_screen('program_run_screen')
+
+        run_screen.load_program(steps_info)
+        run_screen.start_run()  # Reset timers, graph, etc.
+
+        self.manager.transition.direction = 'left'
+        self.manager.current = 'program_run_screen'
+
+        global apply
+        apply = True
+        print(steps_info)
+
     def delete_step(self):
         container = self.ids.panel_content
         if len(container.children) > 0:
             container.remove_widget(container.children[0])
+
+    def graph_lookup(self):
+        self.manager.transition = SlideTransition(direction='left')
+        self.manager.current = 'program_run_screen'
+
+    def open_panel(self):
+        panel = self.ids.sliding_panel
+        new_x = 0 if panel.x < 0 else -panel.width  # toggle open/close
+        Animation(x=new_x, duration=0.3, t='out_quad').start(panel)
+
+    def go_back(self):
+        self.manager.transition = SlideTransition(direction='right')
+        self.manager.current = 'program_screen'
