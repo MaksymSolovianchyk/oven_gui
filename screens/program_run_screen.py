@@ -86,9 +86,9 @@ class ProgramRunScreen(Screen):
         self.live_temp.clear()
         self.run_started = False
         self.time_left_text = "Reaching SetP..."
-        if self.live_line:
+        if self.live_line in self.ax.lines:
             self.live_line.remove()
-            self.live_line = None
+        self.live_line = None
 
     def update_plot(self, dt):
         if not uls.apply:
@@ -157,6 +157,8 @@ class ProgramRunScreen(Screen):
             self.cur_color = [0, 0.5, 1, 1]  # Blue
 
         self.fig.canvas.draw_idle()
+
+
 
     def get_target_temp_at(self, elapsed_time):
         """Determine the target temp at a specific elapsed time"""
