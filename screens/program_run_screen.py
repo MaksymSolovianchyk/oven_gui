@@ -22,6 +22,7 @@ class ProgramRunScreen(Screen):
     time_left_text = StringProperty(str(time_left))
     graph_mode_text = StringProperty('Profile')
 
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -47,6 +48,7 @@ class ProgramRunScreen(Screen):
 
         self.graph_mode = 'live'
         self.position_dot = None
+        self.button_freeze = False
 
         Clock.schedule_interval(self.update_plot, 1)
         Clock.schedule_interval(self.update_time_left, 1)
@@ -70,6 +72,8 @@ class ProgramRunScreen(Screen):
 
         self.total_program_time = cumulative_time
         self.plot_target_profile()
+
+
 
     def plot_target_profile(self):
         self.ax.cla()
@@ -185,7 +189,10 @@ class ProgramRunScreen(Screen):
             self.time_left_text = "Reaching SetP..."
 
     def change_graph(self):
-
+        if self.button_freeze:
+            return
+        self.button_freeze = True
+        Clock.schedule_once(self.unfreeze_button, 1)
         if self.graph_mode == 'live':
             self.graph_mode = 'full'
             self.graph_mode_text = 'Live'
@@ -208,8 +215,9 @@ class ProgramRunScreen(Screen):
             else:
                 elapsed = 0
 
-            if self.position_dot:
-                self.position_dot.remove()
+            if self.position_dot and self.position_dot in self.ax.lines:
+                self.ax.lines.remove(self.position_dot)
+                self.position_dot = None
 
             self.position_dot, = self.ax.plot([elapsed / 60], [current_temp],
                                               'ro', markersize=8, label='Current Position')
@@ -260,6 +268,9 @@ class ProgramRunScreen(Screen):
         content.add_widget(message)
         content.add_widget(close_button)
         popup.open()
+
+    def unfreeze_button(self, dt):
+        self.button_freeze = False
 
     def go_back(self):
         self.manager.transition = SlideTransition(direction='right')
