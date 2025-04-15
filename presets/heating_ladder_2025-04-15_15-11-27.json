@@ -1,0 +1,18 @@
+{
+    "mode": "heating_ladder",
+    "created": "2025-04-15_15-11-27",
+    "steps": [
+        {
+            "temp": 28,
+            "time": 40
+        },
+        {
+            "temp": 50,
+            "time": 50
+        },
+        {
+            "temp": 20,
+            "time": 30
+        }
+    ]
+}

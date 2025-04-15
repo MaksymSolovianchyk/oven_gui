@@ -20,6 +20,7 @@ class ProgramRunScreen(Screen):
     cur_temp = StringProperty(str(int(current_temp)))
     cur_color = ListProperty([1, 1, 1, 1])
     time_left_text = StringProperty(str(time_left))
+    graph_mode_text = StringProperty('Profile')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -44,11 +45,13 @@ class ProgramRunScreen(Screen):
         self.target_line = None
         self.total_program_time = 0
 
+        self.graph_mode = 'live'
+        self.position_dot = None
+
         Clock.schedule_interval(self.update_plot, 1)
         Clock.schedule_interval(self.update_time_left, 1)
 
     def load_program(self, steps):
-        """ Receive steps info and build profile """
         self.program_steps = steps
         self.program_time.clear()
         self.program_temp.clear()
@@ -90,6 +93,10 @@ class ProgramRunScreen(Screen):
             self.live_line.remove()
         self.live_line = None
 
+        if self.position_dot:
+            self.position_dot.remove()
+            self.position_dot = None
+
     def update_plot(self, dt):
         if not uls.apply:
             return
@@ -98,78 +105,63 @@ class ProgramRunScreen(Screen):
         current_temp = sensor_read.get_temperature()
         self.cur_temp = str(int(current_temp))
 
-        # Determine the target temperature based on elapsed time
         if self.run_started:
             elapsed = time.time() - self.start_time
         else:
-            elapsed = 0  # If the program hasn't started yet, set elapsed time to 0
+            elapsed = 0
 
         target_temp = self.get_target_temp_at(elapsed)
 
-        # Start countdown only once the temperature is within ±3°C of the target
         if abs(current_temp - target_temp) <= 3 and not self.run_started:
-            self.start_time = time.time()  # Start the countdown timer
+            self.start_time = time.time()
             self.run_started = True
-            self.live_time.clear()  # Clear any previous live data
+            self.live_time.clear()
             self.live_temp.clear()
 
-        # If the program hasn't started yet, just return
         if not self.run_started:
             return
 
-        # Continue with the normal logic if the program has started
         self.live_time.append(elapsed)
         self.live_temp.append(current_temp)
 
-        # Maintain sliding window of last 10 minutes
         window_seconds = 600
         while self.live_time and (self.live_time[-1] - self.live_time[0]) > window_seconds:
             self.live_time.pop(0)
             self.live_temp.pop(0)
 
-        # Live temp line
-        if not self.live_line:
-            self.live_line, = self.ax.plot(self.live_time, self.live_temp, label='Live Temp', color='red')
-            self.ax.legend()
+        if self.graph_mode == 'live':
+            if not self.live_line:
+                self.live_line, = self.ax.plot(self.live_time, self.live_temp, label='Live Temp', color='red')
+                self.ax.legend()
 
-        self.live_line.set_data(self.live_time, self.live_temp)
+            self.live_line.set_data(self.live_time, self.live_temp)
 
-        # Axis limits
-        if self.live_time:
-            end_time = self.live_time[-1]
-            start_time = max(0, end_time - window_seconds)
-            self.ax.set_xlim(start_time, end_time + 10)
+            if self.live_time:
+                end_time = self.live_time[-1]
+                start_time = max(0, end_time - window_seconds)
+                self.ax.set_xlim(start_time, end_time + 10)
 
-        # Update axis limits to reflect temperature range
-        y_vals = self.live_temp + self.program_temp
-        if y_vals:
-            self.ax.set_ylim(min(y_vals) - 5, max(y_vals) + 5)
+            y_vals = self.live_temp + self.program_temp
+            if y_vals:
+                self.ax.set_ylim(min(y_vals) - 5, max(y_vals) + 5)
 
-        # Determine current target temperature at elapsed time
-        target_temp = self.get_target_temp_at(elapsed)
-
-        # Color logic based on current temperature vs. target
         if abs(current_temp - target_temp) <= 3:
-            self.cur_color = [0, 1, 0, 1]  # Green
+            self.cur_color = [0, 1, 0, 1]
         elif current_temp > target_temp + 3:
-            self.cur_color = [1, 0, 0, 1]  # Red
+            self.cur_color = [1, 0, 0, 1]
         elif current_temp < target_temp - 3:
-            self.cur_color = [0, 0.5, 1, 1]  # Blue
+            self.cur_color = [0, 0.5, 1, 1]
 
         self.fig.canvas.draw_idle()
 
-
-
     def get_target_temp_at(self, elapsed_time):
-        """Determine the target temp at a specific elapsed time"""
         if not self.program_time:
-            return 0  # Default if no program loaded
+            return 0
 
         for i in range(len(self.program_time) - 1):
             if self.program_time[i] <= elapsed_time < self.program_time[i + 1]:
                 return self.program_temp[i]
 
-        # After program ends
         return self.program_temp[-1]
 
     def update_time_left(self, dt):
@@ -191,6 +183,54 @@ class ProgramRunScreen(Screen):
 
         elif uls.apply and not self.run_started:
             self.time_left_text = "Reaching SetP..."
+
+    def change_graph(self):
+
+        if self.graph_mode == 'live':
+            self.graph_mode = 'full'
+            self.graph_mode_text = 'Live'
+        else:
+            self.graph_mode = 'live'
+            self.graph_mode_text = 'Profile'
+
+        self.ax.cla()
+
+        if self.graph_mode == 'full':
+            self.ax.set_xlabel('Time (min)')
+            self.ax.set_ylabel('Temperature (°C)')
+
+            if self.program_time and self.program_temp:
+                self.ax.plot([t / 60 for t in self.program_time], self.program_temp,
+                             label='Target Program', color='blue', linestyle='--')
+
+            if self.run_started:
+                elapsed = time.time() - self.start_time
+            else:
+                elapsed = 0
+
+            if self.position_dot:
+                self.position_dot.remove()
+
+            self.position_dot, = self.ax.plot([elapsed / 60], [current_temp],
+                                              'ro', markersize=8, label='Current Position')
+
+            self.ax.legend()
+
+        elif self.graph_mode == 'live':
+            self.ax.set_xlabel('Time (s)')
+            self.ax.set_ylabel('Temperature (°C)')
+
+            if self.program_time and self.program_temp:
+                self.target_line, = self.ax.plot(self.program_time, self.program_temp,
+                                                 label='Target Program', color='blue', linestyle='--')
+
+            if self.live_time and self.live_temp:
+                self.live_line, = self.ax.plot(self.live_time, self.live_temp,
+                                               label='Live Temp', color='red')
+
+            self.ax.legend()
+
+        self.fig.canvas.draw_idle()
 
     def show_yes_no_popup(self):
         content = BoxLayout(orientation='vertical', spacing=10, padding=10)

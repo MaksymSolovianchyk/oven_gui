@@ -22,25 +22,25 @@
 
         Label:
             text: 'Time left:'
-            pos_hint: {"right": 1, 'top': 0.75}
+            pos_hint: {"right": 1, 'top': 0.85}
             font_size: 20
             size_hint: 0.2, 0.15
 
         Label:
             text: root.time_left_text
-            pos_hint: {"right": 1, 'top': 0.7}
+            pos_hint: {"right": 1, 'top': 0.80}
             font_size: 20
             size_hint: 0.2, 0.15
 
         Label:
             text:'Temp: ' + root.cur_temp + '°C'
-            pos_hint: {"right": 1, 'top': 0.9}
+            pos_hint: {"right": 1, 'top': 0.95}
             font_size: 20
             size_hint: 0.2, 0.15
             color: root.cur_color
 
         RoundedSmallButton:
-            pos_hint: {"right": 0.935, 'top': 0.49}
+            pos_hint: {"right": 0.935, 'top': 0.65}
             size: 55,55
             on_press: root.show_yes_no_popup()
 
@@ -48,7 +48,14 @@
             source: "logos/cross.png"
             size_hint: None, None
             size: 45,45
-            pos_hint: {"right": 0.930, 'top': 0.481}
+            pos_hint: {"right": 0.929, 'top': 0.64}
+
+        RoundedSmallButton:
+            pos_hint: {"right": 0.96, 'top': 0.45}
+            size: 90,55
+            font_size:16
+            text: root.graph_mode_text
+            on_press: root.change_graph()
 
         Button:
             text: 'Go Back'
