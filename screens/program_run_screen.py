@@ -28,7 +28,7 @@ class ProgramRunScreen(Screen):
 
         self.fig, self.ax = plt.subplots(figsize=(6, 4))
         self.ax.set_xlabel('Time (s)')
-        self.ax.set_ylabel('Temperature (°C)')
+        self.ax.set_ylabel('Temperature (Â°C)')
 
         self.graph_widget = FigureCanvasKivyAgg(self.fig)
         self.graph_widget.width = 640
@@ -79,7 +79,7 @@ class ProgramRunScreen(Screen):
     def plot_target_profile(self):
         self.ax.cla()
         self.ax.set_xlabel('Time (s)')
-        self.ax.set_ylabel('Temperature (°C)')
+        self.ax.set_ylabel('Temperature (Â°C)')
 
         if self.program_time and self.program_temp:
             self.target_line, = self.ax.plot(self.program_time, self.program_temp,
@@ -120,8 +120,12 @@ class ProgramRunScreen(Screen):
         if abs(current_temp - target_temp) <= 3 and not self.run_started:
             self.start_time = time.time()
             self.run_started = True
-            self.live_time.clear()
-            self.live_temp.clear()
+
+            if self.live_line:
+                self.live_line.set_data([], [])
+
+            self.live_time = []
+            self.live_temp = []
 
         if not self.run_started:
             return
@@ -205,7 +209,7 @@ class ProgramRunScreen(Screen):
 
         if self.graph_mode == 'full':
             self.ax.set_xlabel('Time (min)')
-            self.ax.set_ylabel('Temperature (°C)')
+            self.ax.set_ylabel('Temperature (Â°C)')
 
             if self.program_time and self.program_temp:
                 self.ax.plot([t / 60 for t in self.program_time], self.program_temp,
@@ -227,7 +231,7 @@ class ProgramRunScreen(Screen):
 
         elif self.graph_mode == 'live':
             self.ax.set_xlabel('Time (s)')
-            self.ax.set_ylabel('Temperature (°C)')
+            self.ax.set_ylabel('Temperature (Â°C)')
 
             if self.program_time and self.program_temp:
                 self.target_line, = self.ax.plot(self.program_time, self.program_temp,
@@ -266,7 +270,7 @@ class ProgramRunScreen(Screen):
 
         self.ax.cla()
         self.ax.set_xlabel('Time (min)')
-        self.ax.set_ylabel('Temperature (°C)')
+        self.ax.set_ylabel('Temperature (Â°C)')
 
         if self.program_time and self.program_temp:
             self.ax.plot([t / 60 for t in self.program_time], self.program_temp,
@@ -305,3 +309,4 @@ class ProgramRunScreen(Screen):
     def go_back(self):
         self.manager.transition = SlideTransition(direction='right')
         self.manager.current = 'up_ladder_screen'
+
