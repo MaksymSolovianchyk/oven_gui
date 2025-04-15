@@ -9,7 +9,11 @@ from kivy.animation import Animation
 from widgets.rounded_button import RoundedSmallButton
 from kivy.uix.screenmanager import SlideTransition
 from screens import program_screen
+from kivy.uix.popup import Popup
+from kivy.uix.scrollview import ScrollView
+
 WATCHDOG_TIMEOUT = 5  # seconds
+from widgets.preset import save_preset as preset_save, load_preset as preset_load, get_preset_names
 
 apply = False
 
@@ -31,7 +35,7 @@ class UpLadderScreen(Screen):
     temp_text = StringProperty("")
     time_text = StringProperty("")
     graph_source = StringProperty("")
-
+    current_mode = StringProperty("")
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.steps = []
@@ -46,10 +50,13 @@ class UpLadderScreen(Screen):
         # Based on the mode, add steps
         if mode == 'up_ladder':
             self.add_custom_steps_up()
+            self.current_mode = 'up_ladder'
         elif mode == 'down_ladder':
             self.add_custom_steps_down()
+            self.current_mode = 'down_ladder'
         elif mode == 'heating_ladder':
             self.add_custom_steps_heat()
+            self.current_mode = 'heating_ladder'
 
     def clear_steps(self):
         # Clear the list of steps
@@ -245,3 +252,86 @@ class UpLadderScreen(Screen):
     def go_back(self):
         self.manager.transition = SlideTransition(direction='right')
         self.manager.current = 'program_screen'
+
+
+
+    def save_current_preset(self):
+        mode = self.current_mode  # assuming you store it when calling set_mode()
+        preset_save(self, mode)
+
+    def load_preset(self):
+        from widgets.preset import get_preset_details
+        import os
+
+        preset_details = get_preset_details(self.current_mode)
+
+        content = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
+        # Scrollable area for preset buttons
+        scrollview = ScrollView(size_hint=(1, 1))
+        presets_box = BoxLayout(orientation='vertical', size_hint_y=None, spacing=10)
+        presets_box.bind(minimum_height=presets_box.setter('height'))
+        scrollview.add_widget(presets_box)
+
+        if not preset_details:
+            presets_box.add_widget(Label(text="No presets available.", size_hint_y=None, height=50))
+        else:
+            for detail in preset_details:
+                row = BoxLayout(orientation='horizontal', size_hint_y=None, height=50, spacing=10)
+
+                # Load button
+                load_btn = Button(
+                    text=f"{detail['name']}",
+                    size_hint_x=0.7
+                )
+                load_btn.bind(
+                    on_release=lambda btn_instance, fname=detail['file_name']: self.load_selected_preset(fname))
+                row.add_widget(load_btn)
+
+                # Delete button
+                delete_btn = Button(
+                    text="Delete",
+                    size_hint_x=0.3,
+                    background_color=(1, 0, 0, 1)
+                )
+                delete_btn.bind(
+                    on_release=lambda btn_instance, fname=detail['file_name']: self.delete_preset(fname, presets_box))
+                row.add_widget(delete_btn)
+
+                presets_box.add_widget(row)
+
+        # Add scrollview to main content layout
+        content.add_widget(scrollview)
+
+        # Close button at the bottom
+        close_btn = Button(text="Close", size_hint_y=None, height=50)
+        content.add_widget(close_btn)
+
+        self.popup = Popup(title="Load Preset", content=content, size_hint=(None, None), size=(450, 500))
+        close_btn.bind(on_release=self.popup.dismiss)
+        self.popup.open()
+    def popup_dismiss(self, *args):
+        self.popup.dismiss()
+
+    def delete_preset(self, preset_name, presets_box):
+        import os
+
+        filepath = os.path.join("presets", preset_name)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            print(f"Deleted preset: {preset_name}")
+
+        # Refresh popup UI after deletion
+        self.popup.dismiss()
+        self.load_preset()
+
+    def load_selected_preset(self, preset_name):
+        preset_load(self, preset_name)
+        self.popup.dismiss()
+
+    def delete_selected_preset(self, preset_name):
+        from widgets.preset import delete_preset
+
+        delete_preset(preset_name)
+        self.popup.dismiss()  # Close the popup
+        self.load_preset()  # Reopen to refresh list

@@ -59,7 +59,7 @@
             pos_hint: {'center_x': 0.91, 'top': 0.225}
 
         Label:
-            text: "Up Ladder Mode"
+            text: root.current_mode
             font_size: 24
             size_hint: None, None
             size: self.texture_size
@@ -105,7 +105,14 @@
                 height: 60
                 padding: [3, 3, 3, 3]
                 spacing: 5
-
+                Button:
+                    text:"Save Preset"
+                    font_size:12
+                    on_press:root.save_current_preset()
+                Button:
+                    text:"Load Preset"
+                    font_size:12
+                    on_press:root.load_preset()
                 Button:
                     text: "Add Step"
                     font_size: 12
