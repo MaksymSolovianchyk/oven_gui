@@ -239,6 +239,7 @@ class UpLadderScreen(Screen):
         container = self.ids.panel_content
         if len(container.children) > 0:
             container.remove_widget(container.children[0])
+            self.steps.pop()
 
     def graph_lookup(self):
         self.manager.transition = SlideTransition(direction='left')

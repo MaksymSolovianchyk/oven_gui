@@ -51,6 +51,7 @@ class ProgramRunScreen(Screen):
         self.button_freeze = False
 
         Clock.schedule_interval(self.update_plot, 1)
+        Clock.schedule_interval(self.update_full_graph, 60)
         Clock.schedule_interval(self.update_time_left, 1)
 
     def load_program(self, steps):
@@ -258,6 +259,35 @@ class ProgramRunScreen(Screen):
     def on_yes(self, popup):
         popup.dismiss()
         uls.apply = 0
+
+    def update_full_graph(self, dt):
+        if self.graph_mode != 'full':
+            return  # Only update when in full view
+
+        self.ax.cla()
+        self.ax.set_xlabel('Time (min)')
+        self.ax.set_ylabel('Temperature (°C)')
+
+        if self.program_time and self.program_temp:
+            self.ax.plot([t / 60 for t in self.program_time], self.program_temp,
+                         label='Target Program', color='blue', linestyle='--')
+
+        if self.run_started:
+            elapsed = time.time() - self.start_time
+        else:
+            elapsed = 0
+
+        global current_temp
+
+        if self.position_dot and self.position_dot in self.ax.lines:
+            self.ax.lines.remove(self.position_dot)
+            self.position_dot = None
+
+        self.position_dot, = self.ax.plot([elapsed / 60], [current_temp],
+                                          'ro', markersize=8, label='Current Position')
+
+        self.ax.legend()
+        self.fig.canvas.draw_idle()
 
     def pop_up_screen(self):
         content = BoxLayout(orientation='vertical', spacing=10, padding=10)
