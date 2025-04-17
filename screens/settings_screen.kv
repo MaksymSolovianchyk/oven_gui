@@ -26,23 +26,11 @@
             pos_hint: {'top': 0.99, 'center_x': 0.8}
         RoundedSmallButton:
             pos_hint: {'center_x': 0.8, 'top': 0.95}
-            on_press: root.open_file_picker()
+            on_press: root.file_detect_and_copy()
         Image:
             source: "logos/add.png"
             size_hint: None, None
             size: 50, 50
             pos_hint: {'center_x': 0.8, 'top': 0.92}
 
-        # Scrollable area
-        ScrollView:
-            size_hint: 1, None
-            height: root.height * 0.7
-            pos_hint: {'x': 0.02, 'y': 0.05}
-            do_scroll_x: False
-            do_scroll_y: True
 
-            BoxLayout:
-                id: program_screen_container
-                orientation: 'vertical'
-                size_hint_y: None
-                height: 880
