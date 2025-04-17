@@ -1,5 +1,6 @@
 import csv
 import os
+from kivy.uix.image import Image
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -9,6 +10,7 @@ from kivy.properties import StringProperty
 from kivy.uix.popup import Popup
 from kivy_garden.matplotlib import FigureCanvasKivyAgg
 import matplotlib.pyplot as plt
+import shutil
 
 
 class ProgramScreen(Screen):
@@ -48,6 +50,13 @@ class ProgramScreen(Screen):
         from kivy_garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
         import matplotlib.pyplot as plt
         import os
+        import shutil
+
+        # Clean the 'graphs' directory before saving new images
+        graph_dir = 'graphs'
+        if os.path.exists(graph_dir):
+            shutil.rmtree(graph_dir)
+        os.makedirs(graph_dir)
 
         wb = load_workbook("presets/presets.xlsx")
         ws = wb.active
@@ -83,10 +92,11 @@ class ProgramScreen(Screen):
 
             steps = [{'temp': temp, 'time': time} for temp, time in zip(temps, times)]
 
-            item_layout = BoxLayout(size_hint_y=None, height=120, spacing=10, padding=5)
+            # Layout for one preset item
+            item_layout = BoxLayout(size_hint_y=None, height=130, spacing=10, padding=5)
 
-            # Create and save the graph with larger figure size and higher DPI
-            fig, ax = plt.subplots(figsize=(3, 2))  # bigger figure here ✅
+            # Create and save the graph with higher resolution
+            fig, ax = plt.subplots(figsize=(4, 3), dpi=150)  # Increased size and DPI
             time_points = [0]
             temp_points = []
 
@@ -97,36 +107,36 @@ class ProgramScreen(Screen):
             if temp_points:
                 temp_points.append(temp_points[-1])
 
-            ax.step(time_points, temp_points, where='post')
+            ax.step(time_points, temp_points, where='post', linewidth=3)
             ax.set_xticks([])
             ax.set_yticks([])
             ax.axis('off')
             fig.tight_layout()
 
-            graph_dir = 'graphs'
-            if not os.path.exists(graph_dir):
-                os.makedirs(graph_dir)
             graph_path = os.path.join(graph_dir, f'{name}_graph.png')
-
-            # ✅ Save with higher DPI
-            fig.savefig(graph_path, dpi=300)
+            fig.savefig(graph_path)
             plt.close(fig)
 
-            # Embed a live matplotlib preview widget in the preset list (if you still want it)
-            graph_widget = FigureCanvasKivyAgg(fig)
-            graph_widget.size_hint_x = 0.4
+            graph_widget = Image(
+                source=graph_path,
+                size_hint_x=0.4,
+                allow_stretch=True,
+                keep_ratio=True
+            )
 
+            # Text button for preset
             text_button = Button(
                 text=f"{name}\n{desc}",
-                size_hint_x=0.6,
+                size_hint_x=0.7,
                 halign='left',
                 valign='middle'
             )
             text_button.text_size = (text_button.width, None)
 
+            # Bind to open preset in up ladder
             text_button.bind(
-                on_release=lambda btn, s=steps, gs=graph_path, n=name, d=desc: self.open_preset_in_up_ladder(s, gs, n,
-                                                                                                             d)
+                on_release=lambda btn, s=steps, gs=graph_path, n=name, d=desc:
+                self.open_preset_in_up_ladder(s, gs, n, d)
             )
 
             item_layout.add_widget(graph_widget)
