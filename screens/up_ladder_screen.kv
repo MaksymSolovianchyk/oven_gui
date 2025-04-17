@@ -1,5 +1,6 @@
 <UpLadderScreen>:
     FloatLayout:
+
         canvas.before:
             Color:
                 rgba: 0.498, 0.533, 0.553, 1
@@ -65,30 +66,31 @@
             pos_hint: {'center_x': 0.91, 'top': 0.225}
 
         Label:
-            text: root.current_mode
+            text: "Name: " + root.preset_name
             font_size: 24
             size_hint: None, None
             size: self.texture_size
             pos_hint: {'top': 0.7, 'center_x': 0.7}
+            width:200
+            text_size:self.width, None
+
 
         Label:
-            text: "Max Temperature: " + root.temp_text + "°C"
+            text: "Description: " + root.preset_description
             font_size: 20
             size_hint: None, None
             size: self.texture_size
-            pos_hint: {'top': 0.6, 'center_x': 0.72}
-        Label:
-            text: "Total Duration: " + root.time_text+ "min"
-            font_size: 20
-            size_hint: None, None
-            size: self.texture_size
-            pos_hint: {'top': 0.53, 'center_x': 0.71}
+            pos_hint: {'top': 0.55, 'center_x': 0.7}
+
+
 
         Image:
-            source: root.graph_source
+
+            source: root.graph_source  # This will now point to the correct graph image
             size_hint: None, None
-            size: 500, 400
+            size: 400, 300
             pos_hint: {'center_x': 0.3, 'top': 0.9}
+
 
         # Sliding Panel
         BoxLayout:
@@ -105,30 +107,6 @@
                     pos: self.pos
                     size: self.size
 
-            # Top bar with control buttons
-            BoxLayout:
-                size_hint_y: None
-                height: 60
-                padding: [3, 3, 3, 3]
-                spacing: 5
-                Button:
-                    text:"Save Preset"
-                    font_size:12
-                    on_press:root.save_current_preset()
-                Button:
-                    text:"Load Preset"
-                    font_size:12
-                    on_press:root.load_preset()
-                Button:
-                    text: "Add Step"
-                    font_size: 12
-                    on_press: root.add_step()
-
-                Button:
-                    text: "Delete Step"
-                    font_size: 12
-                    on_press: root.delete_step()
-
             # Panel content: ScrollView
             ScrollView:
                 do_scroll_x: False
@@ -143,6 +121,3 @@
                     height: self.minimum_height
                     padding: 10
                     spacing: 30
-
-
-
