@@ -11,9 +11,11 @@ import time
 from scripts import sensor_read
 from screens import up_ladder_screen as uls
 from kivy.uix.popup import Popup
-
+import math
 current_temp = int(0)
 time_left = int(0)
+from threading import Thread
+
 
 class ProgramRunScreen(Screen):
     cur_temp = StringProperty(str(int(current_temp)))
@@ -23,6 +25,7 @@ class ProgramRunScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        Thread(target=self.sensor_polling_loop, daemon=True).start()
 
         self.fig, self.ax = plt.subplots(figsize=(6, 4))
         self.ax.set_xlabel('Time (s)')
@@ -42,14 +45,20 @@ class ProgramRunScreen(Screen):
         self.start_time = None
         self.live_line = None
         self.target_line = None
-        self.position_dot = None
         self.total_program_time = 0
+
         self.graph_mode = 'live'
+        self.position_dot = None
         self.button_freeze = False
 
         Clock.schedule_interval(self.update_plot, 1)
         Clock.schedule_interval(self.update_full_graph, 60)
         Clock.schedule_interval(self.update_time_left, 1)
+
+    def setup_axes(self, xlabel, ylabel):
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel(ylabel)
+        self.ax.grid(True)
 
     def load_program(self, steps):
         self.program_steps = steps
@@ -59,26 +68,22 @@ class ProgramRunScreen(Screen):
         cumulative_time = 0
         for step in self.program_steps:
             temp = step['temp']
-            duration = step['time'] * 60
-
+            duration = step['time'] * 60  # convert minutes to seconds
             self.program_time.append(cumulative_time)
             self.program_temp.append(temp)
             cumulative_time += duration
-            self.program_time.append(cumulative_time)
-            self.program_temp.append(temp)
+        self.program_time.append(cumulative_time)
+        self.program_temp.append(self.program_temp[-1])
 
         self.total_program_time = cumulative_time
         self.plot_target_profile()
 
     def plot_target_profile(self):
         self.ax.cla()
-        self.ax.set_xlabel('Time (s)')
-        self.ax.set_ylabel('Temperature (°C)')
-
+        self.setup_axes('Time (s)', 'Temperature (°C)')
         if self.program_time and self.program_temp:
-            self.target_line, = self.ax.plot(self.program_time, self.program_temp,
-                                             label='Target Program', color='blue', linestyle='--')
-
+            self.target_line, = self.ax.step(self.program_time, self.program_temp,
+                                             where='post', label='Target Program', color='blue', linestyle='--')
         self.ax.legend()
         self.fig.canvas.draw_idle()
 
@@ -88,29 +93,24 @@ class ProgramRunScreen(Screen):
         self.live_temp.clear()
         self.run_started = False
         self.time_left_text = "Reaching SetP..."
+        if self.live_line and self.live_line.axes:
+            self.live_line.remove()
+        self.live_line = None
+        if self.position_dot and self.position_dot.axes:
+            self.position_dot.remove()
+        self.position_dot = None
 
-        # safely remove live line
-        if self.live_line:
-            try:
-                self.live_line.remove()
-            except ValueError:
-                pass
-            self.live_line = None
-
-        # safely remove position dot
-        if self.position_dot:
-            try:
-                self.position_dot.remove()
-            except ValueError:
-                pass
-            self.position_dot = None
+    def sensor_polling_loop(self):
+        while True:
+            self.latest_temp = self.safe_get_temp()
+            time.sleep(0.5)
 
     def update_plot(self, dt):
         if not uls.apply:
             return
 
         global current_temp
-        current_temp = sensor_read.get_temperature()
+        current_temp = self.latest_temp
         self.cur_temp = str(int(current_temp))
 
         if self.run_started:
@@ -143,7 +143,6 @@ class ProgramRunScreen(Screen):
             if not self.live_line:
                 self.live_line, = self.ax.plot(self.live_time, self.live_temp, label='Live Temp', color='red')
                 self.ax.legend()
-
             self.live_line.set_data(self.live_time, self.live_temp)
 
             if self.live_time:
@@ -155,13 +154,7 @@ class ProgramRunScreen(Screen):
             if y_vals:
                 self.ax.set_ylim(min(y_vals) - 5, max(y_vals) + 5)
 
-        if abs(current_temp - target_temp) <= 3:
-            self.cur_color = [0, 1, 0, 1]
-        elif current_temp > target_temp + 3:
-            self.cur_color = [1, 0, 0, 1]
-        else:
-            self.cur_color = [0, 0.5, 1, 1]
-
+        self.cur_color = [0, 1, 0, 1] if abs(current_temp - target_temp) <= 3 else [1, 0, 0, 1] if current_temp > target_temp + 3 else [0, 0.5, 1, 1]
         self.fig.canvas.draw_idle()
 
     def get_target_temp_at(self, elapsed_time):
@@ -178,8 +171,10 @@ class ProgramRunScreen(Screen):
             remaining = max(0, self.total_program_time - elapsed)
             global time_left
             time_left = remaining
-            h, m, s = int(remaining) // 3600, (int(remaining) % 3600) // 60, int(remaining) % 60
-            self.time_left_text = f"{h:02d}:{m:02d}:{s:02d}"
+            hours = int(remaining) // 3600
+            minutes = (int(remaining) % 3600) // 60
+            seconds = int(remaining) % 60
+            self.time_left_text = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             if remaining == 0:
                 self.pop_up_screen()
                 uls.apply = False
@@ -192,51 +187,32 @@ class ProgramRunScreen(Screen):
         self.button_freeze = True
         Clock.schedule_once(self.unfreeze_button, 1)
 
+        self.graph_mode = 'full' if self.graph_mode == 'live' else 'live'
+        self.graph_mode_text = 'Live' if self.graph_mode == 'full' else 'Profile'
         self.ax.cla()
 
-        if self.graph_mode == 'live':
-            self.graph_mode = 'full'
-            self.graph_mode_text = 'Live'
-            self.ax.set_xlabel('Time (min)')
-            self.ax.set_ylabel('Temperature (°C)')
-
+        if self.graph_mode == 'full':
+            self.setup_axes('Time (min)', 'Temperature (°C)')
             if self.program_time and self.program_temp:
-                self.ax.plot([t / 60 for t in self.program_time], self.program_temp,
-                             label='Target Program', color='blue', linestyle='--')
-
+                self.ax.step([t/60 for t in self.program_time], self.program_temp,
+                             where='post', label='Target Program', color='blue', linestyle='--')
             if self.run_started:
                 elapsed = time.time() - self.start_time
             else:
                 elapsed = 0
-
-            # safely remove old dot
-            if self.position_dot:
-                try:
-                    self.position_dot.remove()
-                except ValueError:
-                    pass
-                self.position_dot = None
-
+            global current_temp
+            if self.position_dot and self.position_dot.axes:
+                self.position_dot.remove()
             self.position_dot, = self.ax.plot([elapsed / 60], [current_temp],
                                               'ro', markersize=8, label='Current Position')
-            self.ax.legend()
-
-        else:
-            self.graph_mode = 'live'
-            self.graph_mode_text = 'Profile'
-            self.ax.set_xlabel('Time (s)')
-            self.ax.set_ylabel('Temperature (°C)')
-
+        elif self.graph_mode == 'live':
+            self.setup_axes('Time (s)', 'Temperature (°C)')
             if self.program_time and self.program_temp:
-                self.target_line, = self.ax.plot(self.program_time, self.program_temp,
-                                                 label='Target Program', color='blue', linestyle='--')
-
+                self.target_line, = self.ax.step(self.program_time, self.program_temp,
+                                                 where='post', label='Target Program', color='blue', linestyle='--')
             if self.live_time and self.live_temp:
-                self.live_line, = self.ax.plot(self.live_time, self.live_temp,
-                                               label='Live Temp', color='red')
-
-            self.ax.legend()
-
+                self.live_line, = self.ax.plot(self.live_time, self.live_temp, label='Live Temp', color='red')
+        self.ax.legend()
         self.fig.canvas.draw_idle()
 
     def show_yes_no_popup(self):
@@ -262,26 +238,17 @@ class ProgramRunScreen(Screen):
         if self.graph_mode != 'full':
             return
         self.ax.cla()
-        self.ax.set_xlabel('Time (min)')
-        self.ax.set_ylabel('Temperature (°C)')
-
+        self.setup_axes('Time (min)', 'Temperature (°C)')
         if self.program_time and self.program_temp:
-            self.ax.plot([t / 60 for t in self.program_time], self.program_temp,
-                         label='Target Program', color='blue', linestyle='--')
-
+            self.ax.step([t/60 for t in self.program_time], self.program_temp,
+                         where='post', label='Target Program', color='blue', linestyle='--')
         if self.run_started:
             elapsed = time.time() - self.start_time
         else:
             elapsed = 0
-
-        # safely remove old dot
-        if self.position_dot:
-            try:
-                self.position_dot.remove()
-            except ValueError:
-                pass
-            self.position_dot = None
-
+        global current_temp
+        if self.position_dot and self.position_dot.axes:
+            self.position_dot.remove()
         self.position_dot, = self.ax.plot([elapsed / 60], [current_temp],
                                           'ro', markersize=8, label='Current Position')
         self.ax.legend()
@@ -296,6 +263,20 @@ class ProgramRunScreen(Screen):
         content.add_widget(message)
         content.add_widget(close_button)
         popup.open()
+
+    def safe_get_temp(self):
+        try:
+            t1 = time.time()
+            temp = sensor_read.get_temperature()
+            t2 = time.time()
+            print(f"Sensor read: {temp}, took {t2 - t1:.3f} sec")
+            if temp is None or math.isnan(temp) or temp > 500:
+                print("Invalid temperature reading")
+                return None
+            return temp
+        except Exception as e:
+            print(f"Sensor read error: {e}")
+            return None
 
     def unfreeze_button(self, dt):
         self.button_freeze = False
