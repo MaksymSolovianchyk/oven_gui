@@ -2,11 +2,28 @@ import pyudev
 import shutil
 import os
 import time
+import subprocess
+from screens import settings_screen
+def safe_eject_usb(device_node):
+    """
+    Unmounts and ejects a USB device safely.
+    """
+    try:
+        # Unmount the device
+        subprocess.run(['umount', device_node], check=True)
+        print(f"Unmounted {device_node}")
+
+        # Power off the USB device (if supported)
+        subprocess.run(['udisksctl', 'power-off', '-b', device_node], check=True)
+        print(f"Safely ejected {device_node}")
+        settings_screen.Instructions="Presets added, you can remove the flash drive"
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to eject {device_node}: {e}")
 
 def copy_usb_content(target_dir):
     """
     Detects connected USB drives, copies their contents to target_dir.
-    If a file or folder with the same name exists, it will be overwritten.
+    Overwrites existing files/folders. Ejects device after completion.
     """
     context = pyudev.Context()
 
@@ -28,7 +45,6 @@ def copy_usb_content(target_dir):
             if mount_path:
                 print(f"Device mounted at: {mount_path}")
 
-                # Copy contents to target_dir/device_label_timestamp
                 label = device.get('ID_FS_LABEL') or "USB_Drive"
                 timestamp = time.strftime("%Y%m%d_%H%M%S")
                 dest_dir = os.path.join(target_dir, f"{label}_{timestamp}")
@@ -42,17 +58,20 @@ def copy_usb_content(target_dir):
                         d = os.path.join(dest_dir, item)
 
                         if os.path.isdir(s):
-                            # If destination directory exists, remove it first
                             if os.path.exists(d):
                                 shutil.rmtree(d)
                             shutil.copytree(s, d)
                         else:
-                            # If destination file exists, overwrite it
                             shutil.copy2(s, d)
 
                     print("Copy complete.")
+
                 except Exception as e:
                     print(f"Error copying files: {e}")
+
+                # Eject the device after copying
+                safe_eject_usb(device_node)
+
             else:
                 print("Device is not mounted.")
 

@@ -44,6 +44,8 @@ class UpLadderScreen(Screen):
         self.clear_steps()
         for step in preset_steps:
             self.add_step(step['temp'], step['time'])
+        spacer = Widget(size_hint_y=None, height=30)  # adjust height as needed
+        self.ids.panel_content.add_widget(spacer)
 
     def add_step(self, target_temp=20, target_time=30):
         step_data = StepData()

@@ -5,12 +5,16 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 import csv
+from kivy.properties import StringProperty
+
 from scripts import usb_copy
 
 class SettingsScreen(Screen):
+    Instructions=StringProperty("To add custom presets insert flash drive and press Add")
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.saved_csv_data = []  # stores rows from CSV file
+        self.Instructions="To add custom presets insert flash drive and press Add"
     def go_back(self):
         self.manager.transition.direction = 'right'
         self.manager.current = 'second'
