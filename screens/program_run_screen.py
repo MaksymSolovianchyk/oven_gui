@@ -15,20 +15,18 @@ from kivy.uix.popup import Popup
 current_temp = int(0)
 time_left = int(0)
 
-
 class ProgramRunScreen(Screen):
     cur_temp = StringProperty(str(int(current_temp)))
     cur_color = ListProperty([1, 1, 1, 1])
     time_left_text = StringProperty(str(time_left))
     graph_mode_text = StringProperty('Profile')
 
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.fig, self.ax = plt.subplots(figsize=(6, 4))
         self.ax.set_xlabel('Time (s)')
-        self.ax.set_ylabel('Temperature (Â°C)')
+        self.ax.set_ylabel('Temperature (°C)')
 
         self.graph_widget = FigureCanvasKivyAgg(self.fig)
         self.graph_widget.width = 640
@@ -44,10 +42,9 @@ class ProgramRunScreen(Screen):
         self.start_time = None
         self.live_line = None
         self.target_line = None
-        self.total_program_time = 0
-
-        self.graph_mode = 'live'
         self.position_dot = None
+        self.total_program_time = 0
+        self.graph_mode = 'live'
         self.button_freeze = False
 
         Clock.schedule_interval(self.update_plot, 1)
@@ -62,11 +59,10 @@ class ProgramRunScreen(Screen):
         cumulative_time = 0
         for step in self.program_steps:
             temp = step['temp']
-            duration = step['time'] * 60  # minutes to seconds
+            duration = step['time'] * 60
 
             self.program_time.append(cumulative_time)
             self.program_temp.append(temp)
-
             cumulative_time += duration
             self.program_time.append(cumulative_time)
             self.program_temp.append(temp)
@@ -74,12 +70,10 @@ class ProgramRunScreen(Screen):
         self.total_program_time = cumulative_time
         self.plot_target_profile()
 
-
-
     def plot_target_profile(self):
         self.ax.cla()
         self.ax.set_xlabel('Time (s)')
-        self.ax.set_ylabel('Temperature (Â°C)')
+        self.ax.set_ylabel('Temperature (°C)')
 
         if self.program_time and self.program_temp:
             self.target_line, = self.ax.plot(self.program_time, self.program_temp,
@@ -94,12 +88,21 @@ class ProgramRunScreen(Screen):
         self.live_temp.clear()
         self.run_started = False
         self.time_left_text = "Reaching SetP..."
-        if self.live_line in self.ax.lines:
-            self.live_line.remove()
-        self.live_line = None
 
+        # safely remove live line
+        if self.live_line:
+            try:
+                self.live_line.remove()
+            except ValueError:
+                pass
+            self.live_line = None
+
+        # safely remove position dot
         if self.position_dot:
-            self.position_dot.remove()
+            try:
+                self.position_dot.remove()
+            except ValueError:
+                pass
             self.position_dot = None
 
     def update_plot(self, dt):
@@ -120,10 +123,8 @@ class ProgramRunScreen(Screen):
         if abs(current_temp - target_temp) <= 3 and not self.run_started:
             self.start_time = time.time()
             self.run_started = True
-
             if self.live_line:
                 self.live_line.set_data([], [])
-
             self.live_time = []
             self.live_temp = []
 
@@ -158,7 +159,7 @@ class ProgramRunScreen(Screen):
             self.cur_color = [0, 1, 0, 1]
         elif current_temp > target_temp + 3:
             self.cur_color = [1, 0, 0, 1]
-        elif current_temp < target_temp - 3:
+        else:
             self.cur_color = [0, 0.5, 1, 1]
 
         self.fig.canvas.draw_idle()
@@ -166,30 +167,22 @@ class ProgramRunScreen(Screen):
     def get_target_temp_at(self, elapsed_time):
         if not self.program_time:
             return 0
-
         for i in range(len(self.program_time) - 1):
             if self.program_time[i] <= elapsed_time < self.program_time[i + 1]:
                 return self.program_temp[i]
-
         return self.program_temp[-1]
 
     def update_time_left(self, dt):
         if uls.apply and self.run_started:
             elapsed = time.time() - self.start_time
             remaining = max(0, self.total_program_time - elapsed)
-
             global time_left
             time_left = remaining
-
-            hours = int(remaining) // 3600
-            minutes = (int(remaining) % 3600) // 60
-            seconds = int(remaining) % 60
-            self.time_left_text = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-
+            h, m, s = int(remaining) // 3600, (int(remaining) % 3600) // 60, int(remaining) % 60
+            self.time_left_text = f"{h:02d}:{m:02d}:{s:02d}"
             if remaining == 0:
                 self.pop_up_screen()
                 uls.apply = False
-
         elif uls.apply and not self.run_started:
             self.time_left_text = "Reaching SetP..."
 
@@ -198,18 +191,14 @@ class ProgramRunScreen(Screen):
             return
         self.button_freeze = True
         Clock.schedule_once(self.unfreeze_button, 1)
-        if self.graph_mode == 'live':
-            self.graph_mode = 'full'
-            self.graph_mode_text = 'Live'
-        else:
-            self.graph_mode = 'live'
-            self.graph_mode_text = 'Profile'
 
         self.ax.cla()
 
-        if self.graph_mode == 'full':
+        if self.graph_mode == 'live':
+            self.graph_mode = 'full'
+            self.graph_mode_text = 'Live'
             self.ax.set_xlabel('Time (min)')
-            self.ax.set_ylabel('Temperature (Â°C)')
+            self.ax.set_ylabel('Temperature (°C)')
 
             if self.program_time and self.program_temp:
                 self.ax.plot([t / 60 for t in self.program_time], self.program_temp,
@@ -220,18 +209,23 @@ class ProgramRunScreen(Screen):
             else:
                 elapsed = 0
 
-            if self.position_dot and self.position_dot in self.ax.lines:
-                self.ax.lines.remove(self.position_dot)
+            # safely remove old dot
+            if self.position_dot:
+                try:
+                    self.position_dot.remove()
+                except ValueError:
+                    pass
                 self.position_dot = None
 
             self.position_dot, = self.ax.plot([elapsed / 60], [current_temp],
                                               'ro', markersize=8, label='Current Position')
-
             self.ax.legend()
 
-        elif self.graph_mode == 'live':
+        else:
+            self.graph_mode = 'live'
+            self.graph_mode_text = 'Profile'
             self.ax.set_xlabel('Time (s)')
-            self.ax.set_ylabel('Temperature (Â°C)')
+            self.ax.set_ylabel('Temperature (°C)')
 
             if self.program_time and self.program_temp:
                 self.target_line, = self.ax.plot(self.program_time, self.program_temp,
@@ -266,11 +260,10 @@ class ProgramRunScreen(Screen):
 
     def update_full_graph(self, dt):
         if self.graph_mode != 'full':
-            return  # Only update when in full view
-
+            return
         self.ax.cla()
         self.ax.set_xlabel('Time (min)')
-        self.ax.set_ylabel('Temperature (Â°C)')
+        self.ax.set_ylabel('Temperature (°C)')
 
         if self.program_time and self.program_temp:
             self.ax.plot([t / 60 for t in self.program_time], self.program_temp,
@@ -281,15 +274,16 @@ class ProgramRunScreen(Screen):
         else:
             elapsed = 0
 
-        global current_temp
-
-        if self.position_dot and self.position_dot in self.ax.lines:
-            self.ax.lines.remove(self.position_dot)
+        # safely remove old dot
+        if self.position_dot:
+            try:
+                self.position_dot.remove()
+            except ValueError:
+                pass
             self.position_dot = None
 
         self.position_dot, = self.ax.plot([elapsed / 60], [current_temp],
                                           'ro', markersize=8, label='Current Position')
-
         self.ax.legend()
         self.fig.canvas.draw_idle()
 
@@ -309,4 +303,3 @@ class ProgramRunScreen(Screen):
     def go_back(self):
         self.manager.transition = SlideTransition(direction='right')
         self.manager.current = 'up_ladder_screen'
-
