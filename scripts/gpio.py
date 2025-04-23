@@ -1,22 +1,22 @@
 import sys
 
 if sys.platform.startswith('linux'):
-    import RPi.GPIO as GPIO
+    import board
+    import digitalio
 
-    relay = 14
-
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(relay, GPIO.OUT)
-
+    # Use BCM pin 14 (TXD) ? make sure it's not being used by serial!
+    relay = digitalio.DigitalInOut(board.D14)
+    relay.direction = digitalio.Direction.OUTPUT
 
     def heater_on():
-        GPIO.output(relay, GPIO.HIGH)
+        relay.value = False  # LOW
 
     def heater_off():
-        GPIO.output(relay, GPIO.LOW)
+        relay.value = True  # High
 
 else:
     def heater_on():
         print("Heater on")
+
     def heater_off():
         print("Heater off")
