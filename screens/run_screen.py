@@ -11,6 +11,8 @@ import time
 from scripts import sensor_read
 from screens import standard_screen as sts
 from kivy.uix.popup import Popup
+from scripts import gpio
+from screens import up_ladder_screen as uls
 
 current_temp = int(0)
 time_left = int(0)
@@ -20,6 +22,12 @@ class RunScreen(Screen):
     cur_temp = StringProperty(str(int(current_temp)))
     cur_color = ListProperty([1, 1, 1, 1])
     time_left_text = StringProperty(str(time_left))
+
+    def load_temp(self, temp):
+        self.target_temp = temp
+
+    def load_time(self, tme):
+        self.target_time = tme
 
     def start_run(self):
         self.start_time = None
@@ -59,6 +67,8 @@ class RunScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        gpio.heater_off()
+        print("in runscreen")
 
         self.fig, self.ax = plt.subplots(figsize=(6, 4))
         self.ax.set_xlabel('Time (s)')
@@ -100,30 +110,43 @@ class RunScreen(Screen):
             self.time_left_text = "Reaching SetP..."
 
     def update_plot(self, dt):
+        if uls.apply:
+            return
         if not sts.apply:
+            gpio.heater_off()
+            print("in runscreen")
             return
 
-        target_temp = sts.target_temp
-        target_time = sts.target_timer
+        target_temp = self.target_temp
+        target_time = self.target_time
 
         global current_temp
         current_temp = sensor_read.get_temperature()
         self.cur_temp = str(int(current_temp))
 
         # Start countdown only once
-        if abs(current_temp - target_temp) <= 3 and not self.run_started:
+        if abs(current_temp - target_temp) <= 1.5 and not self.run_started:
             self.start_time = time.time()
             self.run_started = True
             self.live_time.clear()
             self.live_temp.clear()
 
         # Temp label color
-        if abs(current_temp - target_temp) <= 3:
+        if abs(current_temp - target_temp) <= 1:
             self.cur_color = [0, 1, 0, 1]  # Green
-        elif current_temp > target_temp + 3:
+        elif current_temp > target_temp + 1.5:
             self.cur_color = [1, 0, 0, 1]  # Red
-        elif current_temp < target_temp - 3:
+            gpio.heater_off()
+            print("Heater off")
+            print("in runscreen")
+
+        elif current_temp < target_temp - 1.5:
             self.cur_color = [0, 0.5, 1, 1]  # Blue
+            gpio.heater_on()
+            print("Heater on")
+            print("in runscreen")
+
+
 
         # Collect data
         if self.run_started:
@@ -173,3 +196,4 @@ class RunScreen(Screen):
     def go_back(self):
         self.manager.transition = SlideTransition(direction='right')
         self.manager.current = 'standard_screen'
+

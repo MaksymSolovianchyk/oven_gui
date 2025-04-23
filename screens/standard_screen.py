@@ -37,7 +37,10 @@ class StandardScreen(Screen):
         global apply
         apply = True
         self.manager.current = 'run_screen'
+        run_screen = self.manager.get_screen('run_screen')
         self.manager.get_screen("run_screen").start_run()
+        run_screen.load_temp(target_temp)
+        run_screen.load_time(target_timer)
 
     def graph_lookup(self):
         self.manager.transition = SlideTransition(direction='left')

@@ -20,5 +20,5 @@ class SettingsScreen(Screen):
         self.manager.current = 'second'
 
     def file_detect_and_copy(self):
-        usb_copy.copy_usb_content("/home/sw/guii/oven_gui-save_branch/presets")
+        usb_copy.copy_usb_file("/home/sw/guii/oven_gui-save_branch/presets")
     #/home/sw/guii/oven_gui-save_branch/presets

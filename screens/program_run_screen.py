@@ -15,7 +15,8 @@ import math
 current_temp = int(0)
 time_left = int(0)
 from threading import Thread
-
+from scripts import gpio
+from screens import standard_screen as sts
 
 class ProgramRunScreen(Screen):
     cur_temp = StringProperty(str(int(current_temp)))
@@ -26,7 +27,7 @@ class ProgramRunScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         Thread(target=self.sensor_polling_loop, daemon=True).start()
-
+        gpio.heater_off()
         self.fig, self.ax = plt.subplots(figsize=(6, 4))
         self.ax.set_xlabel('Time (s)')
         self.ax.set_ylabel('Temperature (°C)')
@@ -106,7 +107,10 @@ class ProgramRunScreen(Screen):
             time.sleep(0.5)
 
     def update_plot(self, dt):
+        if sts.apply:
+            return
         if not uls.apply:
+            gpio.heater_off()
             return
 
         global current_temp
@@ -120,13 +124,24 @@ class ProgramRunScreen(Screen):
 
         target_temp = self.get_target_temp_at(elapsed)
 
-        if abs(current_temp - target_temp) <= 3 and not self.run_started:
+        if abs(current_temp - target_temp) <= 1.5 and not self.run_started:
             self.start_time = time.time()
             self.run_started = True
             if self.live_line:
                 self.live_line.set_data([], [])
             self.live_time = []
             self.live_temp = []
+
+        if abs(current_temp - target_temp) <= 1:
+            self.cur_color = [0, 1, 0, 1]  # Green
+        elif current_temp > target_temp + 1.5:
+            self.cur_color = [1, 0, 0, 1]  # Red
+            gpio.heater_off()
+            print("Heater off")
+        elif current_temp < target_temp - 1.5:
+            self.cur_color = [0, 0.5, 1, 1]  # Blue
+            gpio.heater_on()
+            print("Heater on")
 
         if not self.run_started:
             return
@@ -154,7 +169,7 @@ class ProgramRunScreen(Screen):
             if y_vals:
                 self.ax.set_ylim(min(y_vals) - 5, max(y_vals) + 5)
 
-        self.cur_color = [0, 1, 0, 1] if abs(current_temp - target_temp) <= 3 else [1, 0, 0, 1] if current_temp > target_temp + 3 else [0, 0.5, 1, 1]
+
         self.fig.canvas.draw_idle()
 
     def get_target_temp_at(self, elapsed_time):
@@ -269,7 +284,7 @@ class ProgramRunScreen(Screen):
             t1 = time.time()
             temp = sensor_read.get_temperature()
             t2 = time.time()
-            print(f"Sensor read: {temp}, took {t2 - t1:.3f} sec")
+            #print(f"Sensor read: {temp}, took {t2 - t1:.3f} sec")
             if temp is None or math.isnan(temp) or temp > 500:
                 print("Invalid temperature reading")
                 return None
