@@ -13,7 +13,8 @@ from screens import standard_screen as sts
 from kivy.uix.popup import Popup
 from scripts import gpio
 from screens import up_ladder_screen as uls
-
+import math
+from threading import Thread
 current_temp = int(0)
 time_left = int(0)
 
@@ -35,6 +36,26 @@ class RunScreen(Screen):
         self.live_temp = []
         self.run_started = False
         self.time_left_text = "Reaching SetP..."
+
+
+    def safe_get_temp(self):
+        try:
+            t1 = time.time()
+            temp = sensor_read.get_temperature()
+            t2 = time.time()
+            #print(f"Sensor read: {temp}, took {t2 - t1:.3f} sec")
+            if temp is None or math.isnan(temp) or temp > 500:
+                print("Invalid temperature reading")
+                return None
+            return temp
+        except Exception as e:
+            print(f"Sensor read error: {e}")
+            return None
+
+    def sensor_polling_loop(self):
+        while True:
+            self.latest_temp = self.safe_get_temp()
+            time.sleep(0.5)
 
     def show_yes_no_popup(self):
         content = BoxLayout(orientation='vertical', spacing=10, padding=10)
@@ -68,7 +89,8 @@ class RunScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         gpio.heater_off()
-        print("in runscreen")
+        #print("in runscreen")
+        Thread(target=self.sensor_polling_loop, daemon=True).start()
 
         self.fig, self.ax = plt.subplots(figsize=(6, 4))
         self.ax.set_xlabel('Time (s)')
@@ -121,7 +143,7 @@ class RunScreen(Screen):
         target_time = self.target_time
 
         global current_temp
-        current_temp = sensor_read.get_temperature()
+        current_temp = self.latest_temp
         self.cur_temp = str(int(current_temp))
 
         # Start countdown only once
