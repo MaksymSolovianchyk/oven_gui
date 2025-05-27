@@ -41,7 +41,7 @@ class RunScreen(Screen):
     def safe_get_temp(self):
         try:
             t1 = time.time()
-            temp = sensor_read.get_temperature()
+            temp = sensor_read.get_average_temperature()
             t2 = time.time()
             #print(f"Sensor read: {temp}, took {t2 - t1:.3f} sec")
             if temp is None or math.isnan(temp) or temp > 500:
