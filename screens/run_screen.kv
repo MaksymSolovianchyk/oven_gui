@@ -20,6 +20,13 @@
                 id: canvas_widget
                 size_hint: (None, None)
 
+        RoundedSmallButton:
+            text:'Sensors Status'
+            font_size: 20
+            pos_hint: {"right": 1 , 'top': 0.93}
+            size_hint: 0.2, 0.10
+            on_press: root.go_sensor_status()
+
         Label:
             text: 'Time left:'
             pos_hint: {"right": 1, 'top': 0.75}
@@ -34,7 +41,7 @@
 
         Label:
             text:'Temp: ' + root.cur_temp + '°C'
-            pos_hint: {"right": 1, 'top': 0.9}
+            pos_hint: {"right": 1, 'top': 0.83}
             font_size: 20
             size_hint: 0.2, 0.15
             color: root.cur_color

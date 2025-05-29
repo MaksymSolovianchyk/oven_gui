@@ -20,27 +20,34 @@
                 id: canvas_widget
                 size_hint: (None, None)
 
+        RoundedSmallButton:
+            text:'Sensors Status'
+            font_size: 20
+            pos_hint: {"right": 1 , 'top': 0.93}
+            size_hint: 0.2, 0.10
+            on_press: root.go_sensor_status()
+
         Label:
             text: 'Time left:'
-            pos_hint: {"right": 1, 'top': 0.85}
+            pos_hint: {"right": 1, 'top': 0.75}
             font_size: 20
             size_hint: 0.2, 0.15
 
         Label:
             text: root.time_left_text
-            pos_hint: {"right": 1, 'top': 0.80}
+            pos_hint: {"right": 1, 'top': 0.70}
             font_size: 20
             size_hint: 0.2, 0.15
 
         Label:
             text:'Temp: ' + root.cur_temp + '°C'
-            pos_hint: {"right": 1, 'top': 0.95}
+            pos_hint: {"right": 1, 'top': 0.85}
             font_size: 20
             size_hint: 0.2, 0.15
             color: root.cur_color
 
         RoundedSmallButton:
-            pos_hint: {"right": 0.935, 'top': 0.65}
+            pos_hint: {"right": 0.935, 'top': 0.55}
             size: 55,55
             on_press: root.show_yes_no_popup()
 
@@ -48,10 +55,10 @@
             source: "logos/cross.png"
             size_hint: None, None
             size: 45,45
-            pos_hint: {"right": 0.929, 'top': 0.64}
+            pos_hint: {"right": 0.929, 'top': 0.54}
 
         RoundedSmallButton:
-            pos_hint: {"right": 0.96, 'top': 0.45}
+            pos_hint: {"right": 0.96, 'top': 0.35}
             size: 90,55
             font_size:16
             text: root.graph_mode_text

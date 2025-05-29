@@ -1,3 +1,5 @@
+# sensor_read.py
+
 import sys
 
 if sys.platform.startswith("linux"):
@@ -6,47 +8,66 @@ if sys.platform.startswith("linux"):
     import digitalio
     import adafruit_max31865
 
-    # Shared SPI bus
     spi = busio.SPI(clock=board.SCK, MOSI=board.MOSI, MISO=board.MISO)
-
-    # Chip select pins for both sensors
     cs1 = digitalio.DigitalInOut(board.D5)
     cs2 = digitalio.DigitalInOut(board.D6)
 
-    # Create sensor instances (PT100, 3-wire config)
     sensor1 = adafruit_max31865.MAX31865(spi, cs1, rtd_nominal=100.0, ref_resistor=430.0, wires=3)
     sensor2 = adafruit_max31865.MAX31865(spi, cs2, rtd_nominal=100.0, ref_resistor=430.0, wires=3)
+else:
+    import random
+    sensor1 = "SimulatedSensor1"
+    sensor2 = "SimulatedSensor2"
 
-    def read_sensor(sensor):
-        try:
+def random_temperature():
+    return random.uniform(25, 35)
+
+# Sensor activity flags
+sensor1_active = True
+sensor2_active = True
+
+def read_sensor(sensor):
+    global sensor1_active, sensor2_active
+
+    if sensor == sensor1 and not sensor1_active:
+        print("Sensor 1 is turned off.")
+        return None
+    if sensor == sensor2 and not sensor2_active:
+        print("Sensor 2 is turned off.")
+        return None
+
+    try:
+        if sys.platform.startswith("linux"):
             temp = sensor.temperature
+            print('Temp:{0:0.3f}C '.format(temp))
+            print(sensor.resistance)
             fault = sensor.fault
-            if fault:
+
+            if temp < -200 or temp > 850:
+                print(f"{sensor}: Temperature out of range: {temp:.2f}C")
+
+            if any(fault):
                 print(f"Sensor fault code: {fault}")
                 sensor.clear_faults()
                 return None
             return temp
-        except Exception as e:
-            print(f"Sensor error: {e}")
-            return None
-
-    def get_average_temperature():
-        temps = []
-        for i, s in enumerate([sensor1, sensor2], start=1):
-            temp = read_sensor(s)
-            if temp is not None:
-                temps.append(temp)
-            else:
-                print(f"Sensor {i} failed or returned invalid data.")
-
-        if temps:
-            return sum(temps) / len(temps)
         else:
-            print("Both sensors failed.")
-            return None
+            return random_temperature()
+    except Exception as e:
+        print(f"Sensor error: {e}")
+        return None
 
-else:
-    # Simulated environment
-    import random
-    def get_average_temperature():
-        return sum([random.uniform(25, 35) for _ in range(2)]) / 2
+def get_average_temperature():
+    temps = []
+    for i, s in enumerate([sensor1, sensor2], start=1):
+        temp = read_sensor(s)
+        if temp is not None:
+            temps.append(temp)
+        else:
+            print(f"Sensor {i} failed or returned invalid data.")
+
+    if temps:
+        return sum(temps) / len(temps)
+    else:
+        print("Both sensors failed.")
+        return 0.0

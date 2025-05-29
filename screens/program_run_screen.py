@@ -17,6 +17,7 @@ time_left = int(0)
 from threading import Thread
 from scripts import gpio
 from screens import standard_screen as sts
+from screens import sensor_status
 
 class ProgramRunScreen(Screen):
     cur_temp = StringProperty(str(int(current_temp)))
@@ -295,6 +296,12 @@ class ProgramRunScreen(Screen):
 
     def unfreeze_button(self, dt):
         self.button_freeze = False
+
+    def go_sensor_status(self):
+        sensor_stat=self.manager.get_screen('sensor_status')
+        sensor_stat.parse_last_screen('program_run_screen')
+        self.manager.transition = SlideTransition(direction='right')
+        self.manager.current = 'sensor_status'
 
     def go_back(self):
         self.manager.transition = SlideTransition(direction='right')

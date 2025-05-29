@@ -219,3 +219,9 @@ class RunScreen(Screen):
         self.manager.transition = SlideTransition(direction='right')
         self.manager.current = 'standard_screen'
 
+
+    def go_sensor_status(self):
+        sensor_stat=self.manager.get_screen('sensor_status')
+        sensor_stat.parse_last_screen('run_screen')
+        self.manager.transition = SlideTransition(direction='right')
+        self.manager.current = 'sensor_status'
