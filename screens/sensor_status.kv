@@ -20,10 +20,11 @@
             size_hint: 0.2, 0.15
 
         ToggleButton:
+            id: toggle1
             text: "Sensor 1: OFF" if self.state == "down" else "Sensor 1: ON"
             size_hint: 0.2, 0.1
             pos_hint: {'center_x': 0.33, 'top': 0.45}
-            on_state: root.toggle_sensor1(self.state != 'down')
+            on_state: root.toggle_sensor1(self.state != 'down', self)
 
         Image:
             source: "logos/temperature-sensor.png"
@@ -38,10 +39,11 @@
             size_hint: 0.2, 0.15
 
         ToggleButton:
+            id: toggle2
             text: "Sensor 2: OFF" if self.state == "down" else "Sensor 2: ON"
             size_hint: 0.2, 0.1
             pos_hint: {'center_x': 0.66, 'top': 0.45}
-            on_state: root.toggle_sensor2(self.state != 'down')
+            on_state: root.toggle_sensor2(self.state != 'down', self)
 
         Button:
             text: "Go Back"

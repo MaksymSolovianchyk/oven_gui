@@ -29,8 +29,17 @@ class SensorStatusScreen(Screen):
         avg = sensor_read.get_average_temperature()
         print(f"Average Temperature: {avg:.2f}" if avg else "No valid sensors.")
 
-    def toggle_sensor1(self, active):
+    def toggle_sensor1(self, active, button):
+        from scripts import sensor_read
         sensor_read.sensor1_active = active
+        button.disabled = True
+        Clock.schedule_once(lambda dt: self.enable_button(button), 1)
 
-    def toggle_sensor2(self, active):
+    def toggle_sensor2(self, active, button):
+        from scripts import sensor_read
         sensor_read.sensor2_active = active
+        button.disabled = True
+        Clock.schedule_once(lambda dt: self.enable_button(button), 1)
+
+    def enable_button(self, button):
+        button.disabled = False
