@@ -1,6 +1,8 @@
 # sensor_read.py
 
 import sys
+import threading
+from kivy.clock import Clock
 
 if sys.platform.startswith("linux"):
     import board
@@ -57,7 +59,22 @@ def read_sensor(sensor):
         print(f"Sensor error: {e}")
         return None
 
+def read_sensors_threaded(callback):
+    def task():
+        temps = []
+        for i, s in enumerate([sensor1, sensor2], start=1):
+            temp = read_sensor(s)
+            if temp is not None:
+                temps.append(temp)
+            else:
+                print(f"Sensor {i} failed or returned invalid data.")
+        average = sum(temps) / len(temps) if temps else 0.0
+        Clock.schedule_once(lambda dt: callback(average), 0)
+
+    threading.Thread(target=task, daemon=True).start()
+
 def get_average_temperature():
+    # Legacy sync version (used for testing or blocking use)
     temps = []
     for i, s in enumerate([sensor1, sensor2], start=1):
         temp = read_sensor(s)
