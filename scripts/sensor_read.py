@@ -2,6 +2,7 @@
 
 import sys
 import threading
+import time
 from kivy.clock import Clock
 
 if sys.platform.startswith("linux"):
@@ -24,32 +25,29 @@ else:
 def random_temperature():
     return random.uniform(25, 35)
 
-# Sensor activity flags
 sensor1_active = True
 sensor2_active = True
+
+_latest_temp = 0.0
+_temp_lock = threading.Lock()
 
 def read_sensor(sensor):
     global sensor1_active, sensor2_active
 
     if sensor == sensor1 and not sensor1_active:
-        print("Sensor 1 is turned off.")
         return None
     if sensor == sensor2 and not sensor2_active:
-        print("Sensor 2 is turned off.")
         return None
 
     try:
         if sys.platform.startswith("linux"):
             temp = sensor.temperature
-            print('Temp:{0:0.3f}C '.format(temp))
-            print(sensor.resistance)
             fault = sensor.fault
 
             if temp < -200 or temp > 850:
-                print(f"{sensor}: Temperature out of range: {temp:.2f}C")
+                return None
 
             if any(fault):
-                print(f"Sensor fault code: {fault}")
                 sensor.clear_faults()
                 return None
             return temp
@@ -59,32 +57,25 @@ def read_sensor(sensor):
         print(f"Sensor error: {e}")
         return None
 
-def read_sensors_threaded(callback):
-    def task():
+def _sensor_loop():
+    global _latest_temp
+    while True:
         temps = []
-        for i, s in enumerate([sensor1, sensor2], start=1):
-            temp = read_sensor(s)
+        for sensor in [sensor1, sensor2]:
+            temp = read_sensor(sensor)
             if temp is not None:
                 temps.append(temp)
-            else:
-                print(f"Sensor {i} failed or returned invalid data.")
-        average = sum(temps) / len(temps) if temps else 0.0
-        Clock.schedule_once(lambda dt: callback(average), 0)
+        avg = sum(temps) / len(temps) if temps else 0.0
 
-    threading.Thread(target=task, daemon=True).start()
+        with _temp_lock:
+            _latest_temp = avg
+
+        time.sleep(0.5)
+
+def start_sensor_thread():
+    thread = threading.Thread(target=_sensor_loop, daemon=True)
+    thread.start()
 
 def get_average_temperature():
-    # Legacy sync version (used for testing or blocking use)
-    temps = []
-    for i, s in enumerate([sensor1, sensor2], start=1):
-        temp = read_sensor(s)
-        if temp is not None:
-            temps.append(temp)
-        else:
-            print(f"Sensor {i} failed or returned invalid data.")
-
-    if temps:
-        return sum(temps) / len(temps)
-    else:
-        print("Both sensors failed.")
-        return 0.0
+    with _temp_lock:
+        return _latest_temp

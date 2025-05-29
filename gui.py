@@ -14,12 +14,13 @@ from screens.program_screen import ProgramScreen
 from screens.settings_screen import SettingsScreen
 from screens.run_screen import RunScreen
 from screens.up_ladder_screen import UpLadderScreen
-
+from scripts import sensor_read
 Window.size = (800, 480)
 
 class MyScreenApp(App):
     def build(self):
         # Load the RoundedButton widget first
+        sensor_read.start_sensor_thread()
         Builder.load_file("widgets/rounded_button.kv")
 
         # Load all screen layout .kv files
